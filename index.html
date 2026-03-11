@@ -3,69 +3,60 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pete Master Control | Fitter v2.4</title>
+<title>Pete Master Control v2.5</title>
 <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-zinc-950 text-zinc-200 p-4 font-sans min-h-screen">
 <div class="max-w-xl mx-auto space-y-4 pb-20">
-    <header class="p-6 bg-zinc-900 border border-zinc-800 rounded-3xl shadow-xl text-center">
-        <h1 class="text-2xl font-black tracking-tighter text-orange-500 uppercase italic">Fleet Fitter v2.4</h1>
-        <p class="text-[10px] text-zinc-500 uppercase tracking-widest mt-1">Intelligent Asset Deployment</p>
+    <header class="p-6 bg-zinc-900 border border-zinc-800 rounded-3xl text-center">
+        <h1 class="text-2xl font-black text-orange-500 uppercase italic">Fitter v2.5</h1>
+        <p class="text-[10px] text-zinc-500 uppercase tracking-widest">Manual Asset Control</p>
     </header>
 
-    <div class="p-6 bg-zinc-900 border border-zinc-800 rounded-3xl space-y-3 shadow-xl">
-        <input type="password" id="pat" placeholder="GitHub Token" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs focus:border-orange-500 outline-none">
-        <input type="text" id="repo" placeholder="Target Repo (e.g., FB-Data-Porter)" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs focus:border-orange-500 outline-none">
+    <div class="p-6 bg-zinc-900 border border-zinc-800 rounded-3xl space-y-3">
+        <input type="password" id="pat" placeholder="GitHub Token" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs outline-none">
+        <input type="text" id="repo" placeholder="Repo Name (e.g. FB-Data-Porter)" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs outline-none">
     </div>
 
     <div class="grid grid-cols-3 gap-2">
-        <button onclick="setAsset('index.html')" class="bg-zinc-800 border border-zinc-700 p-2 rounded-xl text-[10px] font-bold hover:border-blue-500 transition-all text-blue-400">HTML/CSS</button>
-        <button onclick="setAsset('code.js')" class="bg-zinc-800 border border-zinc-700 p-2 rounded-xl text-[10px] font-bold hover:border-yellow-500 transition-all text-yellow-400">SCRIPT</button>
-        <button onclick="setAsset('README.md')" class="bg-zinc-800 border border-zinc-700 p-2 rounded-xl text-[10px] font-bold hover:border-green-500 transition-all text-green-400">README</button>
+        <button onclick="setAsset('index.html')" class="bg-zinc-800 border border-blue-900/50 p-3 rounded-xl text-[10px] font-bold text-blue-400">TARGET: HTML</button>
+        <button onclick="setAsset('code.js')" class="bg-zinc-800 border border-yellow-900/50 p-3 rounded-xl text-[10px] font-bold text-yellow-500">TARGET: SCRIPT</button>
+        <button onclick="setAsset('README.md')" class="bg-zinc-800 border border-green-900/50 p-3 rounded-xl text-[10px] font-bold text-green-500">TARGET: README</button>
     </div>
 
-    <div class="space-y-2">
-        <div class="flex justify-between items-end px-2">
-            <span class="text-[9px] text-zinc-600 uppercase font-bold">Target Path</span>
-            <button onclick="wipeDeck()" class="text-[9px] uppercase font-bold text-zinc-600 hover:text-red-500 transition-colors">[ Wipe Deck ]</button>
-        </div>
-        <input type="text" id="path" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs text-orange-400 font-mono" placeholder="e.g. index.html">
+    <div class="flex flex-col space-y-1">
+        <label class="text-[9px] uppercase font-bold text-zinc-600 px-2">Current Deployment Path:</label>
+        <input type="text" id="path" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs text-orange-400 font-mono italic" placeholder="path/to/file.ext">
     </div>
 
-    <textarea id="content" class="w-full h-80 bg-zinc-900 border border-zinc-800 rounded-3xl p-4 text-xs font-mono focus:border-orange-500 outline-none scrollbar-hide" placeholder="Paste asset content..."></textarea>
+    <div class="relative">
+        <textarea id="content" class="w-full h-96 bg-zinc-900 border border-zinc-800 rounded-3xl p-4 text-xs font-mono focus:border-orange-500 outline-none scrollbar-hide" placeholder="Paste your code here..."></textarea>
+        <button onclick="document.getElementById('content').value=''" class="absolute right-4 bottom-4 text-[9px] bg-red-900/20 text-red-500 px-2 py-1 rounded border border-red-900/50 font-bold uppercase">Clear Deck</button>
+    </div>
 
-    <button onclick="pushToGitHub()" id="pushBtn" class="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-4 rounded-3xl shadow-lg uppercase text-xs tracking-widest transition-all">Push Asset to Fleet</button>
+    <button onclick="pushToGitHub()" id="pushBtn" class="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-4 rounded-3xl shadow-lg uppercase text-xs tracking-widest transition-all">Commission Asset</button>
     
-    <div id="statusBox" onclick="showConsole()" class="cursor-pointer group border border-dashed border-zinc-800 rounded-2xl p-4 transition-all hover:bg-zinc-900">
-        <div id="log" class="text-[10px] font-mono text-zinc-500 text-center italic">Ready. Tap for console log.</div>
+    <div id="statusBox" onclick="showConsole()" class="cursor-pointer border border-dashed border-zinc-800 rounded-2xl p-4 hover:bg-zinc-900 transition-colors">
+        <div id="log" class="text-[10px] font-mono text-zinc-500 text-center italic">Ready. Tap for logs.</div>
     </div>
 </div>
 
 <div id="consoleModal" class="hidden fixed inset-0 bg-black/95 z-50 p-6 overflow-y-auto">
     <div class="flex justify-between items-center mb-4 border-b border-zinc-800 pb-2">
-        <h2 class="text-orange-500 font-bold text-xs uppercase italic">System Console Log</h2>
-        <button onclick="hideConsole()" class="text-zinc-500 text-xs uppercase font-bold hover:text-white">[ Close ]</button>
+        <h2 class="text-orange-500 font-bold text-xs uppercase italic">Diagnostic Console</h2>
+        <button onclick="hideConsole()" class="text-zinc-500 text-[10px] font-bold">[ CLOSE ]</button>
     </div>
-    <pre id="consoleOutput" class="text-[10px] text-zinc-400 font-mono whitespace-pre-wrap leading-relaxed"></pre>
+    <pre id="consoleOutput" class="text-[10px] text-zinc-400 font-mono whitespace-pre-wrap"></pre>
 </div>
 
 <script>
-let lastError = "No errors logged yet. System idle.";
+let lastError = "System Idle.";
 
 function setAsset(target) {
-    // Intelligent Toggle: Path updates, Content stays.
+    // This ONLY changes the path. It touches NOTHING ELSE.
     document.getElementById('path').value = target;
-    const log = document.getElementById('log');
-    log.innerText = "Targeted: " + target + " (Deck Intact)";
-    log.className = "text-[10px] font-mono text-blue-400 text-center italic py-2";
-}
-
-function wipeDeck() {
-    if(confirm("Wipe the current content field?")) {
-        document.getElementById('content').value = "";
-        document.getElementById('log').innerText = "Deck Cleared.";
-        document.getElementById('log').className = "text-[10px] font-mono text-red-400 text-center italic py-2";
-    }
+    document.getElementById('log').innerText = "Path set to: " + target;
+    document.getElementById('log').className = "text-[10px] font-mono text-blue-400 text-center italic";
 }
 
 function showConsole() { document.getElementById('consoleModal').classList.remove('hidden'); }
@@ -80,55 +71,48 @@ async function pushToGitHub() {
     const btn = document.getElementById('pushBtn');
 
     if (!pat || !repo || !path || !content) {
-        alert("System Check: All fields required before deployment.");
-        return;
+        alert("Incomplete data."); return;
     }
 
-    btn.innerText = "DEPLOYING...";
+    btn.innerText = "TRANSMITTING...";
     btn.disabled = true;
 
     try {
         const url = `https://api.github.com/repos/pete-m/${repo}/contents/${path}`;
         let sha = null;
         
-        // 1. Get SHA for overwrite
+        // Check for existing file
         const getRes = await fetch(url, { headers: { 'Authorization': `token ${pat}` } });
-        if (getRes.ok) { 
-            const d = await getRes.json(); 
-            sha = d.sha; 
-        }
+        if (getRes.ok) { const d = await getRes.json(); sha = d.sha; }
 
-        // 2. Transmit to GitHub
+        // Send payload
         const pushRes = await fetch(url, {
             method: 'PUT',
             headers: { 'Authorization': `token ${pat}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                message: `Modular fitting: ${path}`,
+                message: "Update " + path,
                 content: btoa(unescape(encodeURIComponent(content))),
                 sha: sha
             })
         });
 
-        const resultData = await pushRes.json();
+        const resData = await pushRes.json();
         
         if (pushRes.ok) {
-            log.innerText = "SUCCESS: " + path + " commissioned to " + repo;
-            log.className = "text-[10px] font-mono text-green-500 text-center font-bold italic py-2";
-            lastError = "Last Transaction: Success\nFile: " + path + "\nSHA: " + resultData.content.sha;
-            document.getElementById('consoleOutput').innerText = lastError;
+            log.innerText = "SUCCESS: " + path + " PUSHED.";
+            log.className = "text-[10px] font-mono text-green-500 text-center font-bold";
         } else {
-            lastError = JSON.stringify(resultData, null, 2);
+            lastError = JSON.stringify(resData, null, 2);
             document.getElementById('consoleOutput').innerText = lastError;
-            log.innerText = "ERROR: Tap to inspect payload.";
-            log.className = "text-[10px] font-mono text-red-500 text-center font-bold animate-pulse py-2";
+            log.innerText = "ERROR: Tap to inspect.";
+            log.className = "text-[10px] font-mono text-red-500 text-center font-bold animate-pulse";
         }
     } catch (err) {
-        lastError = err.stack || err.toString();
+        lastError = err.toString();
         document.getElementById('consoleOutput').innerText = lastError;
-        log.innerText = "CRITICAL FAILURE: Tap for trace.";
-        log.className = "text-[10px] font-mono text-red-600 text-center font-bold py-2";
+        log.innerText = "FETCH FAILED.";
     } finally {
-        btn.innerText = "Push Asset to Fleet";
+        btn.innerText = "Commission Asset";
         btn.disabled = false;
     }
 }
