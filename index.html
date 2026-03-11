@@ -1,159 +1,103 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fleet Command | Master Control</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fleet Fitter | Master Control</title>
+<script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-900 text-slate-100 p-4 md:p-8 font-sans">
-
-    <header class="max-w-6xl mx-auto mb-10 flex justify-between items-end border-b border-slate-800 pb-6">
-        <div>
-            <h1 class="text-4xl font-black text-blue-500 tracking-tighter">FLEET COMMAND</h1>
-            <p class="text-slate-400 font-mono text-sm uppercase tracking-widest">Mobile-First Shipyard</p>
-        </div>
-        <div class="flex gap-4">
-            <input type="password" id="ghToken" placeholder="GitHub PAT" class="bg-slate-950 border border-slate-700 p-2 rounded text-xs outline-none focus:border-blue-500">
-            <button onclick="clearFleet()" class="text-[10px] text-slate-600 hover:text-red-400 uppercase tracking-widest">Reset Registry</button>
-        </div>
+<body class="bg-zinc-950 text-zinc-200 p-4 font-sans min-h-screen">
+<div class="max-w-xl mx-auto space-y-4">
+    <header class="p-6 bg-zinc-900 border border-zinc-800 rounded-3xl shadow-xl text-center">
+        <h1 class="text-2xl font-black tracking-tighter text-orange-500 uppercase">Fleet Fitter v2.0</h1>
+        <p class="text-[10px] text-zinc-500 uppercase tracking-widest mt-1">Modular Asset Deployment</p>
     </header>
 
-    <main class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+    <div class="p-6 bg-zinc-900 border border-zinc-800 rounded-3xl space-y-3 shadow-xl">
+        <input type="password" id="pat" placeholder="GitHub Personal Access Token" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs focus:border-orange-500 outline-none">
+        <input type="text" id="repo" placeholder="Target Repo (e.g., FB-Data-Porter)" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs focus:border-orange-500 outline-none">
+    </div>
+
+    <div class="grid grid-cols-3 gap-2">
+        <button onclick="setAsset('index.html')" class="bg-zinc-900 border border-zinc-800 p-2 rounded-xl text-[10px] font-bold hover:border-blue-500 transition-all">HTML/CSS</button>
+        <button onclick="setAsset('code.js')" class="bg-zinc-900 border border-zinc-800 p-2 rounded-xl text-[10px] font-bold hover:border-yellow-500 transition-all">SCRIPT</button>
+        <button onclick="setAsset('README.md')" class="bg-zinc-900 border border-zinc-800 p-2 rounded-xl text-[10px] font-bold hover:border-green-500 transition-all">README</button>
+    </div>
+
+    <div class="relative">
+        <input type="text" id="path" placeholder="File Path (e.g., index.html)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs text-orange-400 font-mono">
+        <span class="absolute right-3 top-3 text-[9px] text-zinc-600 uppercase font-bold">Target Asset</span>
+    </div>
+
+    <textarea id="content" placeholder="Paste asset code here..." class="w-full h-80 bg-zinc-900 border border-zinc-800 rounded-3xl p-4 text-xs font-mono focus:border-orange-500 outline-none scrollbar-hide"></textarea>
+
+    <button onclick="pushToGitHub()" id="pushBtn" class="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-4 rounded-3xl shadow-lg transition-all uppercase tracking-widest text-xs">Push Asset to Fleet</button>
+    
+    <div id="log" class="text-[10px] font-mono text-zinc-500 text-center italic py-2">System Ready for Modular Push.</div>
+</div>
+
+<script>
+function setAsset(target) {
+    document.getElementById('path').value = target;
+    const log = document.getElementById('log');
+    log.innerText = "Targeted: " + target;
+    log.className = "text-[10px] font-mono text-blue-400 text-center italic py-2";
+}
+
+async function pushToGitHub() {
+    const pat = document.getElementById('pat').value;
+    const repo = document.getElementById('repo').value;
+    const path = document.getElementById('path').value;
+    const content = document.getElementById('content').value;
+    const log = document.getElementById('log');
+    const btn = document.getElementById('pushBtn');
+
+    if (!pat || !repo || !path || !content) return alert("All fields required.");
+
+    btn.innerText = "DEPLOYING...";
+    btn.disabled = true;
+
+    try {
+        const url = `https://api.github.com/repos/pete-m/${repo}/contents/${path}`;
         
-        <section class="lg:col-span-4 space-y-6 bg-slate-800/50 p-6 rounded-2xl border border-slate-700 shadow-xl">
-            <h2 class="text-xl font-bold text-blue-300 flex items-center gap-2">🏗️ Batch Dry Dock</h2>
-            <div class="space-y-4">
-                <input type="text" id="userName" placeholder="Full Name (for MIT License)" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-lg text-sm">
-                <label class="block text-[10px] text-slate-500 uppercase font-black">Repo List (One per line)</label>
-                <textarea id="repoList" placeholder="FB-Data-Porter&#10;Pete-COPD-Logs" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-lg text-sm h-32 font-mono"></textarea>
-                <button onclick="launchFleetBatch()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition-all">Launch Fleet Batch</button>
-            </div>
-            <div id="log" class="text-[10px] font-mono text-slate-500 h-24 overflow-y-auto bg-black/30 p-2 rounded"></div>
-        </section>
-
-        <section class="lg:col-span-4 space-y-6 bg-slate-800/50 p-6 rounded-2xl border border-slate-700 shadow-xl">
-            <h2 class="text-xl font-bold text-amber-400 flex items-center gap-2">🛠️ File Fitter</h2>
-            <p class="text-[10px] text-slate-400 italic">Upload files directly to any repo without GitSync.</p>
-            <div class="space-y-4">
-                <input type="text" id="targetRepo" placeholder="Target Repo Name" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-lg text-sm">
-                <input type="text" id="filePath" placeholder="Path (e.g. index.html or scripts/app.py)" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-lg text-sm">
-                <textarea id="fileContent" placeholder="Paste file content here..." class="w-full bg-slate-950 border border-slate-700 p-3 rounded-lg text-sm h-32 font-mono text-xs"></textarea>
-                <button onclick="fitFile()" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-3 rounded-xl transition-all">Push File to GitHub</button>
-            </div>
-        </section>
-
-        <section class="lg:col-span-4 space-y-6">
-            <h2 class="text-xl font-bold text-emerald-400 flex items-center gap-2">🚢 Active Fleet Units</h2>
-            <div id="fleetGrid" class="space-y-3 max-h-[600px] overflow-y-auto pr-2"></div>
-        </section>
-    </main>
-
-    <script>
-        const log = (msg, color='slate-500') => {
-            const el = document.getElementById('log');
-            el.innerHTML += `<div class="text-${color}">> ${msg}</div>`;
-            el.scrollTop = el.scrollHeight;
-        };
-
-        window.onload = () => {
-            const saved = JSON.parse(localStorage.getItem('gh_fleet') || '[]');
-            saved.forEach(r => renderCard(r.name, r.url));
-        };
-
-        // --- BATCH LAUNCH LOGIC ---
-        async function launchFleetBatch() {
-            const token = document.getElementById('ghToken').value;
-            const user = document.getElementById('userName').value || "Peter Maben";
-            const repos = document.getElementById('repoList').value.split('\n').filter(n => n.trim() !== "");
-            
-            if(!token) return alert("Enter GitHub Token first.");
-
-            for (let name of repos) {
-                name = name.trim();
-                log(`Initializing hull: ${name}`, 'blue-400');
-                try {
-                    const res = await fetch('https://api.github.com/user/repos', {
-                        method: 'POST',
-                        headers: { 'Authorization': `token ${token}` },
-                        body: JSON.stringify({ name, auto_init: true })
-                    });
-                    const data = await res.json();
-                    if(!res.ok) throw new Error(data.message);
-
-                    const licenseText = `MIT License\n\nCopyright (c) 2026 ${user}\n\nStandard MIT License...`;
-                    await pushToGH(token, data.full_name, 'LICENSE', licenseText, "Add MIT License");
-                    await pushToGH(token, data.full_name, 'scripts/.keep', '', "Init scripts");
-                    
-                    saveToFleet(name, data.html_url);
-                    renderCard(name, data.html_url);
-                    log(`${name} deployed!`, 'emerald-400');
-                    await new Promise(r => setTimeout(r, 1000));
-                } catch (e) { log(`Error: ${e.message}`, 'red-400'); }
-            }
+        // 1. Get existing file (to get SHA if it exists)
+        let sha = null;
+        const getRes = await fetch(url, {
+            headers: { 'Authorization': `token ${pat}` }
+        });
+        if (getRes.ok) {
+            const getData = await getRes.json();
+            sha = getData.sha;
         }
 
-        // --- FILE FITTER LOGIC ---
-        async function fitFile() {
-            const token = document.getElementById('ghToken').value;
-            const repo = document.getElementById('targetRepo').value;
-            const path = document.getElementById('filePath').value;
-            const content = document.getElementById('fileContent').value;
-            
-            if(!token || !repo || !path) return alert("Check all fields.");
+        // 2. Push Update
+        const pushRes = await fetch(url, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `token ${pat}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                message: `Modular fitting: ${path}`,
+                content: btoa(unescape(encodeURIComponent(content))),
+                sha: sha
+            })
+        });
 
-            log(`Fitting file to ${repo}...`, 'amber-400');
-            try {
-                // Get username for the path
-                const userRes = await fetch('https://api.github.com/user', { headers: { 'Authorization': `token ${token}` } });
-                const userData = await userRes.json();
-                const fullPath = `${userData.login}/${repo}`;
-
-                await pushToGH(token, fullPath, path, content, `Update ${path}`);
-                log(`Successfully pushed ${path}`, 'emerald-400');
-            } catch (e) { log(`Fit Error: ${e.message}`, 'red-400'); }
+        if (pushRes.ok) {
+            log.innerText = "SUCCESS: " + path + " fitted to " + repo;
+            log.className = "text-[10px] font-mono text-green-500 text-center font-bold py-2";
+        } else {
+            throw new Error(await pushRes.text());
         }
-
-        async function pushToGH(token, fullRepo, path, content, msg) {
-            // Check if file exists to get SHA (required for updates)
-            let sha = null;
-            const existing = await fetch(`https://api.github.com/repos/${fullRepo}/contents/${path}`, {
-                headers: { 'Authorization': `token ${token}` }
-            });
-            if (existing.ok) {
-                const fileData = await existing.json();
-                sha = fileData.sha;
-            }
-
-            const res = await fetch(`https://api.github.com/repos/${fullRepo}/contents/${path}`, {
-                method: 'PUT',
-                headers: { 'Authorization': `token ${token}` },
-                body: JSON.stringify({ message: msg, content: btoa(unescape(encodeURIComponent(content))), sha })
-            });
-            if(!res.ok) { const d = await res.json(); throw new Error(d.message); }
-        }
-
-        function saveToFleet(name, url) {
-            const f = JSON.parse(localStorage.getItem('gh_fleet') || '[]');
-            f.push({name, url});
-            localStorage.setItem('gh_fleet', JSON.stringify(f));
-        }
-
-        function renderCard(name, url) {
-            const grid = document.getElementById('fleetGrid');
-            const card = document.createElement('div');
-            card.className = "p-4 bg-slate-800 border border-slate-700 rounded-xl flex justify-between items-center group";
-            card.innerHTML = `
-                <div>
-                    <h3 class="font-bold text-sm text-slate-100">${name}</h3>
-                    <a href="${url}" target="_blank" class="text-[9px] text-blue-400 hover:underline">View Source</a>
-                </div>
-                <button onclick="document.getElementById('targetRepo').value='${name}'" class="text-[9px] bg-slate-700 px-2 py-1 rounded hover:bg-amber-600 transition">Select for Fit</button>
-            `;
-            grid.appendChild(card);
-        }
-
-        function clearFleet() { if(confirm("Clear local registry?")) { localStorage.removeItem('gh_fleet'); location.reload(); } }
-    </script>
+    } catch (err) {
+        log.innerText = "ERROR: See Console.";
+        console.error(err);
+    } finally {
+        btn.innerText = "Push Asset to Fleet";
+        btn.disabled = false;
+    }
+}
+</script>
 </body>
 </html>
