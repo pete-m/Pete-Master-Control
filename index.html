@@ -1,78 +1,71 @@
 <!DOCTYPE html>
 <html lang="en-GB">
-<head> 
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pete Master Control v2.5</title>
+<title>PMC v2.6 | Scorched Earth</title>
 <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-zinc-950 text-zinc-200 p-4 font-sans min-h-screen">
 <div class="max-w-xl mx-auto space-y-4 pb-20">
     <header class="p-6 bg-zinc-900 border border-zinc-800 rounded-3xl text-center">
-        <h1 class="text-2xl font-black text-orange-500 uppercase italic">Fitter v2.5</h1>
-        <p class="text-[10px] text-zinc-500 uppercase tracking-widest">Manual Asset Control</p>
+        <h1 class="text-2xl font-black text-orange-600 uppercase italic">Master Fitter v2.6</h1>
+        <p class="text-[9px] text-zinc-600 uppercase tracking-[0.4em]">Zero-Autofill Logic</p>
     </header>
 
     <div class="p-6 bg-zinc-900 border border-zinc-800 rounded-3xl space-y-3">
-        <input type="password" id="pat" placeholder="GitHub Token" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs outline-none">
-        <input type="text" id="repo" placeholder="Repo Name (e.g. FB-Data-Porter)" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs outline-none">
+        <input type="password" id="X_PAT_X" autocomplete="off" placeholder="GitHub Token" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs outline-none">
+        <input type="text" id="X_REPO_X" autocomplete="off" placeholder="Repo Name" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs outline-none text-blue-400">
     </div>
 
     <div class="grid grid-cols-3 gap-2">
-        <button onclick="setAsset('index.html')" class="bg-zinc-800 border border-blue-900/50 p-3 rounded-xl text-[10px] font-bold text-blue-400">TARGET: HTML</button>
-        <button onclick="setAsset('code.js')" class="bg-zinc-800 border border-yellow-900/50 p-3 rounded-xl text-[10px] font-bold text-yellow-500">TARGET: SCRIPT</button>
-        <button onclick="setAsset('README.md')" class="bg-zinc-800 border border-green-900/50 p-3 rounded-xl text-[10px] font-bold text-green-500">TARGET: README</button>
+        <button onclick="updatePath('index.html')" class="bg-zinc-800 border border-zinc-700 p-3 rounded-xl text-[10px] font-bold uppercase">HTML</button>
+        <button onclick="updatePath('code.js')" class="bg-zinc-800 border border-zinc-700 p-3 rounded-xl text-[10px] font-bold uppercase">Script</button>
+        <button onclick="updatePath('README.md')" class="bg-zinc-800 border border-zinc-700 p-3 rounded-xl text-[10px] font-bold uppercase">Me</button>
     </div>
 
-    <div class="flex flex-col space-y-1">
-        <label class="text-[9px] uppercase font-bold text-zinc-600 px-2">Current Deployment Path:</label>
-        <input type="text" id="path" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs text-orange-400 font-mono italic" placeholder="path/to/file.ext">
+    <input type="text" id="X_PATH_X" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs text-orange-500 font-mono" placeholder="Target File Path">
+
+    <div class="relative group">
+        <textarea id="X_CONTENT_X" class="w-full h-80 bg-zinc-900 border border-zinc-800 rounded-3xl p-4 text-xs font-mono focus:border-orange-500 outline-none" placeholder="PASTE CODE HERE..."></textarea>
+        <button onclick="document.getElementById('X_CONTENT_X').value=''" class="absolute right-4 bottom-4 text-[9px] bg-red-600/10 text-red-500 px-3 py-1 rounded-full border border-red-900/50 uppercase font-bold">Clear</button>
     </div>
 
-    <div class="relative">
-        <textarea id="content" class="w-full h-96 bg-zinc-900 border border-zinc-800 rounded-3xl p-4 text-xs font-mono focus:border-orange-500 outline-none scrollbar-hide" placeholder="Paste your code here..."></textarea>
-        <button onclick="document.getElementById('content').value=''" class="absolute right-4 bottom-4 text-[9px] bg-red-900/20 text-red-500 px-2 py-1 rounded border border-red-900/50 font-bold uppercase">Clear Deck</button>
-    </div>
-
-    <button onclick="pushToGitHub()" id="pushBtn" class="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-4 rounded-3xl shadow-lg uppercase text-xs tracking-widest transition-all">Commission Asset</button>
+    <button onclick="executePush()" id="X_BTN_X" class="w-full bg-orange-600 text-white font-bold py-4 rounded-3xl shadow-2xl uppercase text-xs tracking-widest">Commission Asset</button>
     
-    <div id="statusBox" onclick="showConsole()" class="cursor-pointer border border-dashed border-zinc-800 rounded-2xl p-4 hover:bg-zinc-900 transition-colors">
-        <div id="log" class="text-[10px] font-mono text-zinc-500 text-center italic">Ready. Tap for logs.</div>
+    <div id="X_LOG_X" onclick="toggleConsole()" class="cursor-pointer border border-zinc-800 rounded-2xl p-4 text-[10px] font-mono text-zinc-500 text-center italic">
+        Status: Standing By. Tap for logs.
     </div>
 </div>
 
-<div id="consoleModal" class="hidden fixed inset-0 bg-black/95 z-50 p-6 overflow-y-auto">
+<div id="X_MODAL_X" class="hidden fixed inset-0 bg-black/98 z-50 p-6 overflow-y-auto">
     <div class="flex justify-between items-center mb-4 border-b border-zinc-800 pb-2">
-        <h2 class="text-orange-500 font-bold text-xs uppercase italic">Diagnostic Console</h2>
-        <button onclick="hideConsole()" class="text-zinc-500 text-[10px] font-bold">[ CLOSE ]</button>
+        <span class="text-orange-500 font-bold text-[10px] uppercase">Diagnostic Console</span>
+        <button onclick="toggleConsole()" class="text-zinc-500 text-[10px]">[ CLOSE ]</button>
     </div>
-    <pre id="consoleOutput" class="text-[10px] text-zinc-400 font-mono whitespace-pre-wrap"></pre>
+    <pre id="X_CONSOLE_X" class="text-[9px] text-zinc-500 font-mono whitespace-pre-wrap leading-tight"></pre>
 </div>
 
 <script>
-let lastError = "System Idle.";
+let consoleLog = "No data.";
 
-function setAsset(target) {
-    // This ONLY changes the path. It touches NOTHING ELSE.
-    document.getElementById('path').value = target;
-    document.getElementById('log').innerText = "Path set to: " + target;
-    document.getElementById('log').className = "text-[10px] font-mono text-blue-400 text-center italic";
+function updatePath(val) {
+    // Only updates path. No other field is touched.
+    document.getElementById('X_PATH_X').value = val;
+    document.getElementById('X_LOG_X').innerText = "Path Locked: " + val;
 }
 
-function showConsole() { document.getElementById('consoleModal').classList.remove('hidden'); }
-function hideConsole() { document.getElementById('consoleModal').classList.add('hidden'); }
+function toggleConsole() { document.getElementById('X_MODAL_X').classList.toggle('hidden'); }
 
-async function pushToGitHub() {
-    const pat = document.getElementById('pat').value;
-    const repo = document.getElementById('repo').value;
-    const path = document.getElementById('path').value;
-    const content = document.getElementById('content').value;
-    const log = document.getElementById('log');
-    const btn = document.getElementById('pushBtn');
+async function executePush() {
+    const pat = document.getElementById('X_PAT_X').value;
+    const repo = document.getElementById('X_REPO_X').value;
+    const path = document.getElementById('X_PATH_X').value;
+    const body = document.getElementById('X_CONTENT_X').value;
+    const log = document.getElementById('X_LOG_X');
+    const btn = document.getElementById('X_BTN_X');
 
-    if (!pat || !repo || !path || !content) {
-        alert("Incomplete data."); return;
-    }
+    if(!pat || !repo || !path || !body) { alert("Data Missing."); return; }
 
     btn.innerText = "TRANSMITTING...";
     btn.disabled = true;
@@ -81,32 +74,40 @@ async function pushToGitHub() {
         const url = `https://api.github.com/repos/pete-m/${repo}/contents/${path}`;
         let sha = null;
         
-        // Check for existing file
-        const getRes = await fetch(url, { headers: { 'Authorization': `token ${pat}` } });
-        if (getRes.ok) { const d = await getRes.json(); sha = d.sha; }
+        const g = await fetch(url, {headers:{'Authorization':`token ${pat}`}});
+        if(g.ok) { const d = await g.json(); sha = d.sha; }
 
-        // Send payload
-        const pushRes = await fetch(url, {
+        const p = await fetch(url, {
             method: 'PUT',
-            headers: { 'Authorization': `token ${pat}`, 'Content-Type': 'application/json' },
+            headers: {'Authorization':`token ${pat}`,'Content-Type':'application/json'},
             body: JSON.stringify({
                 message: "Update " + path,
-                content: btoa(unescape(encodeURIComponent(content))),
+                content: btoa(unescape(encodeURIComponent(body))),
                 sha: sha
             })
         });
 
-        const resData = await pushRes.json();
-        
-        if (pushRes.ok) {
-            log.innerText = "SUCCESS: " + path + " PUSHED.";
-            log.className = "text-[10px] font-mono text-green-500 text-center font-bold";
+        const r = await p.json();
+        if(p.ok) {
+            log.innerText = "SUCCESS: " + path + " COMMISSIONED.";
+            log.className = "border border-green-900 rounded-2xl p-4 text-[10px] font-mono text-green-500 text-center font-bold italic";
         } else {
-            lastError = JSON.stringify(resData, null, 2);
-            document.getElementById('consoleOutput').innerText = lastError;
+            consoleLog = JSON.stringify(r, null, 2);
+            document.getElementById('X_CONSOLE_X').innerText = consoleLog;
             log.innerText = "ERROR: Tap to inspect.";
-            log.className = "text-[10px] font-mono text-red-500 text-center font-bold animate-pulse";
+            log.className = "border border-red-900 rounded-2xl p-4 text-[10px] font-mono text-red-500 text-center font-bold";
         }
+    } catch(e) {
+        document.getElementById('X_CONSOLE_X').innerText = e.toString();
+        log.innerText = "FETCH FAILED.";
+    } finally {
+        btn.innerText = "Commission Asset";
+        btn.disabled = false;
+    }
+}
+</script>
+</body>
+</html>        }
     } catch (err) {
         lastError = err.toString();
         document.getElementById('consoleOutput').innerText = lastError;
