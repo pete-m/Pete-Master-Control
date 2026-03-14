@@ -29,15 +29,15 @@ jobs:
 
           # 4. Clear the staging area and add ONLY the master index
           git rm -rf . --cached > /dev/null
-          if [ -f "index.htm" ]; then
-            git add index.htm
+          if [ -f "index.html" ]; then
+            git add index.html
           else
             echo "Warning: index.htm not found, adding all current files instead."
             git add .
           fi
 
           # 5. Create the new "Only" commit
-          git commit -m "System Reset: Master index.htm ready"
+          git commit -m "System Reset: Master index.html ready"
 
           # 6. Delete the old branch locally and rename the new one to match
           git branch -D $CURRENT_BRANCH
