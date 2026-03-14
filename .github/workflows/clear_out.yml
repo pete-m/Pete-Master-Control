@@ -1,0 +1,48 @@
+name: "clear_out"
+
+on:
+  workflow_dispatch: # Allows manual trigger from the Actions tab
+
+jobs:
+  wipe-and-reset:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Essential for pushing the "wipe" to the repo
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Pulls full history so we can delete it
+
+      - name: Force Reset History
+        run: |
+          # 1. Identify the current branch name (main or master)
+          CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          
+          # 2. Configure a generic bot identity for the commit
+          git config --global user.name "Master Control"
+          git config --global user.email "bot@github.com"
+
+          # 3. Create a fresh branch with no history (orphan)
+          git checkout --orphan temp_wipe_branch
+
+          # 4. Clear the staging area and add ONLY the master index
+          git rm -rf . --cached > /dev/null
+          if [ -f "index.htm" ]; then
+            git add index.htm
+          else
+            echo "Warning: index.htm not found, adding all current files instead."
+            git add .
+          fi
+
+          # 5. Create the new "Only" commit
+          git commit -m "System Reset: Master index.htm ready"
+
+          # 6. Delete the old branch locally and rename the new one to match
+          git branch -D $CURRENT_BRANCH
+          git branch -m $CURRENT_BRANCH
+
+          # 7. Force push the new 1-commit history to GitHub
+          git push origin $CURRENT_BRANCH --force
+          
