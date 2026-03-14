@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>PMC v3.8</title>
+<title>PMC v3.9</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
-    .active-tab { border-color: #ea580c !important; color: #ea580c !important; background: #1c1c1f !important; }
-    .staged { color: #ea580c !important; border-color: #ea580c !important; opacity: 1 !important; border-style: solid !important; }
+    .active-tab { border-bottom: 3px solid #ea580c !important; color: #ea580c !important; background: #18181b !important; }
+    .staged { color: #ea580c !important; opacity: 1 !important; border-style: solid !important; }
     .valid-token { color: #22c55e !important; }
     .invalid-token { color: #ef4444 !important; }
     textarea { scrollbar-width: thin; scrollbar-color: #3f3f46 transparent; }
@@ -18,57 +18,57 @@
 <div class="max-w-md mx-auto space-y-3 pb-10">
     <header class="p-4 bg-zinc-900 border border-zinc-800 rounded-2xl flex justify-between items-center shadow-xl">
         <div>
-            <h1 class="text-xl font-black text-orange-600 uppercase italic tracking-tighter leading-none">PMC v3.8</h1>
+            <h1 class="text-xl font-black text-orange-600 uppercase italic tracking-tighter leading-none">PMC v3.9</h1>
             <p id="AUTH_STAT" class="text-[8px] text-zinc-600 uppercase tracking-[0.2em] font-bold mt-1">Standby...</p>
         </div>
-        <button onclick="hardReset()" class="text-[9px] font-bold text-red-500/40 uppercase hover:text-red-500">[ Wipe ]</button>
+        <button onclick="hardReset()" class="text-[9px] font-bold text-red-500/40 uppercase hover:text-red-500">[ Wipe Cache ]</button>
     </header>
 
     <div id="UI_LOG" class="bg-zinc-950 border border-zinc-900 rounded-xl p-2 text-[10px] font-mono text-zinc-500 text-center italic shadow-inner">
-        Ready for assignment.
+        Awaiting Auth.
     </div>
 
     <section class="p-4 bg-zinc-900 border-2 border-orange-600/20 rounded-2xl space-y-2 shadow-2xl">
         <div class="flex justify-between items-center px-1">
             <span class="text-[9px] uppercase font-black text-orange-600 tracking-widest italic">Gateway: Mandatory PAT</span>
         </div>
-        <input type="password" id="ENTRY_TOKEN" placeholder="Paste GitHub PAT here..." class="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-xs outline-none focus:border-orange-600 shadow-inner" onchange="validateToken()">
+        <input type="password" id="ENTRY_TOKEN" placeholder="Paste GitHub PAT..." class="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-xs outline-none focus:border-orange-600 shadow-inner" onblur="validateToken()" onchange="validateToken()">
     </section>
 
-    <section class="p-4 bg-zinc-900 border border-zinc-800 rounded-2xl space-y-3 shadow-xl opacity-80 focus-within:opacity-100 transition-opacity">
+    <section class="p-4 bg-zinc-900 border border-zinc-800 rounded-2xl space-y-3 shadow-xl">
         <div class="flex justify-between items-center px-1">
-            <span class="text-[9px] uppercase font-black text-zinc-600 tracking-widest italic">Phase 1: New Infrastructure</span>
+            <span class="text-[9px] uppercase font-black text-zinc-600 tracking-widest italic">Phase 1: Infrastructure</span>
         </div>
         <div class="flex gap-2">
             <input type="text" id="INIT_REPO_NAME" placeholder="New Repo Name" class="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-xs outline-none text-blue-400 font-mono" oninput="saveCreds()">
-            <button onclick="fullSystemInit()" class="bg-orange-600 text-white font-black px-5 rounded-lg text-[9px] uppercase active:scale-95 transition-all">Init Repo</button>
+            <button onclick="fullSystemInit()" class="bg-orange-600 text-white font-black px-5 rounded-lg text-[9px] uppercase active:scale-95 transition-all">Init</button>
         </div>
     </section>
 
     <div class="pt-2 px-1 flex justify-between items-end border-b border-zinc-900 pb-1">
         <h2 class="text-[10px] font-black text-orange-600 uppercase tracking-widest italic">Phase 2: File Fitter</h2>
-        <span class="text-[7px] text-zinc-600 uppercase font-bold tracking-tighter">Asset Staging</span>
+        <span class="text-[7px] text-zinc-600 uppercase font-bold tracking-tighter">Target Repo Required</span>
     </div>
 
     <section class="space-y-2">
         <input type="text" id="ENTRY_REPO" placeholder="Target Repository Name" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs outline-none text-blue-400 font-mono shadow-xl focus:border-orange-600 transition-all" oninput="saveCreds()">
 
         <div class="grid grid-cols-3 gap-1">
-            <button id="tab-index.html" onclick="switchBuffer('index.html')" class="bg-zinc-900 border border-zinc-800 p-2 rounded-lg text-[8px] font-black uppercase transition-all">HTML</button>
-            <button id="tab-code.js" onclick="switchBuffer('code.js')" class="bg-zinc-900 border border-zinc-800 p-2 rounded-lg text-[8px] font-black uppercase transition-all">Script</button>
-            <button id="tab-README.md" onclick="switchBuffer('README.md')" class="bg-zinc-900 border border-zinc-800 p-2 rounded-lg text-[8px] font-black uppercase transition-all">ReadMe</button>
+            <button id="tab-index.html" onclick="switchBuffer('index.html')" class="bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[8px] font-black uppercase transition-all">index.html</button>
+            <button id="tab-code.js" onclick="switchBuffer('code.js')" class="bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[8px] font-black uppercase transition-all">code.js</button>
+            <button id="tab-README.md" onclick="switchBuffer('README.md')" class="bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[8px] font-black uppercase transition-all">ReadMe.md</button>
         </div>
 
         <div class="relative">
-            <textarea id="MAIN_TEXT" oninput="updateBufferMemory()" class="w-full h-40 bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-[10px] font-mono focus:border-orange-600 outline-none shadow-inner leading-relaxed resize-none" placeholder="Paste asset code..."></textarea>
+            <textarea id="MAIN_TEXT" oninput="saveActiveContent()" class="w-full h-40 bg-zinc-900 border border-zinc-800 rounded-b-xl rounded-tr-xl p-4 text-[10px] font-mono focus:border-orange-600 outline-none shadow-inner leading-relaxed resize-none" placeholder="Paste asset code..."></textarea>
             <button onclick="clearCurrentBuffer()" class="absolute bottom-2 right-2 text-red-500/30 hover:text-red-500 text-[8px] font-bold uppercase tracking-tighter">[ Clear ]</button>
         </div>
 
         <div class="p-3 bg-zinc-900 border border-zinc-800 rounded-xl space-y-3 shadow-xl">
             <div id="STAGING_BAR" class="flex justify-center gap-3">
-                <div id="status-index.html" class="border border-dashed border-zinc-800 px-2 py-0.5 rounded text-[7px] font-bold opacity-30">HTML</div>
-                <div id="status-code.js" class="border border-dashed border-zinc-800 px-2 py-0.5 rounded text-[7px] font-bold opacity-30">SCRIPT</div>
-                <div id="status-README.md" class="border border-dashed border-zinc-800 px-2 py-0.5 rounded text-[7px] font-bold opacity-30">README</div>
+                <div id="status-index.html" class="border border-dashed border-zinc-800 px-2 py-0.5 rounded text-[7px] font-bold opacity-30 tracking-tighter">HTML</div>
+                <div id="status-code.js" class="border border-dashed border-zinc-800 px-2 py-0.5 rounded text-[7px] font-bold opacity-30 tracking-tighter">SCRIPT</div>
+                <div id="status-README.md" class="border border-dashed border-zinc-800 px-2 py-0.5 rounded text-[7px] font-bold opacity-30 tracking-tighter">README</div>
             </div>
             
             <button id="PUSH_TRIGGER" onclick="executeBatchDeployment()" class="w-full bg-zinc-800 border border-zinc-700 text-zinc-400 font-bold py-3 rounded-lg uppercase text-[9px] tracking-[0.2em] transition-all hover:bg-zinc-700 hover:text-white">Commission Assets</button>
@@ -89,6 +89,11 @@ window.onload = () => {
     document.getElementById('ENTRY_TOKEN').value = localStorage.getItem('pmc_token') || '';
     document.getElementById('ENTRY_REPO').value = localStorage.getItem('pmc_repo') || '';
     document.getElementById('INIT_REPO_NAME').value = localStorage.getItem('pmc_init_repo') || '';
+    
+    // Load existing buffers if they exist in cache
+    const savedBuffers = localStorage.getItem('pmc_buffers');
+    if(savedBuffers) buffers = JSON.parse(savedBuffers);
+
     if(document.getElementById('ENTRY_TOKEN').value) validateToken();
     switchBuffer('index.html');
 };
@@ -106,6 +111,112 @@ async function validateToken() {
             stat.className = "text-[8px] uppercase tracking-[0.2em] font-black valid-token";
         } else {
             stat.innerText = "GATEWAY: CLOSED";
+            stat.className = "text-[8px] uppercase tracking-[0.2em] font-black invalid-token";
+        }
+    } catch(e) { stat.innerText = "GATEWAY: ERROR"; }
+}
+
+function saveCreds() {
+    localStorage.setItem('pmc_token', document.getElementById('ENTRY_TOKEN').value);
+    localStorage.setItem('pmc_repo', document.getElementById('ENTRY_REPO').value);
+    localStorage.setItem('pmc_init_repo', document.getElementById('INIT_REPO_NAME').value);
+}
+
+// REAL-TIME SAVING TO PREVENT BUFFER LOSS
+function saveActiveContent() {
+    buffers[currentPath] = document.getElementById('MAIN_TEXT').value;
+    localStorage.setItem('pmc_buffers', JSON.stringify(buffers));
+    updateStagingIcons();
+}
+
+function switchBuffer(newPath) {
+    // 1. Force save current view to buffer
+    buffers[currentPath] = document.getElementById('MAIN_TEXT').value;
+    
+    // 2. Switch context
+    currentPath = newPath;
+    
+    // 3. Load from buffer
+    document.getElementById('MAIN_TEXT').value = buffers[newPath] || '';
+    
+    // 4. Update UI Highlighting
+    document.querySelectorAll('[id^="tab-"]').forEach(btn => btn.classList.remove('active-tab'));
+    document.getElementById(`tab-${newPath}`).classList.add('active-tab');
+    
+    updateStagingIcons();
+}
+
+function updateStagingIcons() {
+    Object.keys(buffers).forEach(key => {
+        const el = document.getElementById(`status-${key}`);
+        if(buffers[key] && buffers[key].trim().length > 0) el.classList.add('staged');
+        else el.classList.remove('staged');
+    });
+}
+
+function updateLog(msg) { document.getElementById('UI_LOG').innerText = msg; }
+
+async function fullSystemInit() {
+    const pat = document.getElementById('ENTRY_TOKEN').value;
+    const name = document.getElementById('INIT_REPO_NAME').value;
+    if(!pat || !name) return alert("PAT and Name required.");
+    updateLog("Phase 1: Initialising...");
+    try {
+        const res = await fetch('https://api.github.com/user/repos', {
+            method: 'POST',
+            headers: {'Authorization': `token ${pat}`, 'Content-Type': 'application/json'},
+            body: JSON.stringify({ name: name, auto_init: true })
+        });
+        if(res.ok) {
+            updateLog("Injecting Workflows...");
+            setTimeout(async () => {
+                await pushFile(pat, name, '.github/workflows/static.yml', WORKFLOWS.static);
+                await pushFile(pat, name, '.github/workflows/clear_out.yml', WORKFLOWS.clearout);
+                updateLog("Infrastructure Live.");
+                document.getElementById('ENTRY_REPO').value = name;
+                saveCreds();
+            }, 3000);
+        } else { updateLog("Failed: " + res.status); }
+    } catch(e) { updateLog("Connection Error."); }
+}
+
+async function executeBatchDeployment() {
+    const pat = document.getElementById('ENTRY_TOKEN').value;
+    const repo = document.getElementById('ENTRY_REPO').value;
+    const files = Object.keys(buffers).filter(k => buffers[k].trim().length > 0);
+    if(!pat || !repo || files.length === 0) return alert("Assets, PAT, and Target required.");
+    updateLog("Commissioning assets...");
+    for (const file of files) { await pushFile(pat, repo, file, buffers[file]); }
+    updateLog("Assets Commissioned.");
+}
+
+async function pushFile(pat, repo, path, content) {
+    const url = `https://api.github.com/repos/pete-m/${repo}/contents/${path}`;
+    let sha = null;
+    const g = await fetch(url, {headers:{'Authorization':`token ${pat}`}});
+    if(g.ok) { const d = await g.json(); sha = d.sha; }
+    return fetch(url, {
+        method: 'PUT',
+        headers: {'Authorization':`token ${pat}`,'Content-Type':'application/json'},
+        body: JSON.stringify({
+            message: "PMC v3.9 Deployment",
+            content: btoa(unescape(encodeURIComponent(content))),
+            sha: sha
+        })
+    });
+}
+
+function clearCurrentBuffer() {
+    document.getElementById('MAIN_TEXT').value = '';
+    saveActiveContent();
+}
+
+function hardReset() {
+    if(confirm("Purge Local Cache?")) { localStorage.clear(); location.reload(); }
+}
+</script>
+</body>
+</html>
             stat.className = "text-[8px] uppercase tracking-[0.2em] font-black invalid-token";
         }
     } catch(e) { stat.innerText = "GATEWAY: ERROR"; }
