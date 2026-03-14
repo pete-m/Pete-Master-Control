@@ -1,18 +1,13 @@
 <!DOCTYPE html>
 <html lang="en-GB">
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>PMC v1</title>
-    <!--Peter Maben woz here -->
-    
+<title>PMC v4.1</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
     .active-tab { border-bottom: 3px solid #ea580c !important; color: #ea580c !important; background: #18181b !important; }
-    .staged { color: #ea580c !important; opacity: 1 !important; border-style: solid !important; }
-    .valid-token { color: #22c55e !important; }
-    .invalid-token { color: #ef4444 !important; }
+    .staged { color: #ea580c !important; opacity: 1 !important; }
     textarea { scrollbar-width: thin; scrollbar-color: #3f3f46 transparent; }
 </style>
 </head>
@@ -21,36 +16,36 @@
 <div class="max-w-md mx-auto space-y-3 pb-10">
     <header class="p-4 bg-zinc-900 border border-zinc-800 rounded-2xl flex justify-between items-center shadow-xl">
         <div>
-            <h1 class="text-xl font-black text-orange-600 uppercase italic tracking-tighter leading-none">PMC v3.9</h1>
-            <p id="AUTH_STAT" class="text-[8px] text-zinc-600 uppercase tracking-[0.2em] font-bold mt-1">Standby...</p>
+            <h1 class="text-xl font-black text-orange-600 uppercase italic tracking-tighter leading-none">PMC v4.1</h1>
+            <p id="AUTH_STAT" class="text-[8px] text-zinc-600 uppercase tracking-[0.2em] font-bold mt-1">Awaiting Command</p>
         </div>
         <button onclick="hardReset()" class="text-[9px] font-bold text-red-500/40 uppercase hover:text-red-500">[ Wipe Cache ]</button>
     </header>
 
     <div id="UI_LOG" class="bg-zinc-950 border border-zinc-900 rounded-xl p-2 text-[10px] font-mono text-zinc-500 text-center italic shadow-inner">
-        Awaiting Auth.
+        Ready.
     </div>
 
     <section class="p-4 bg-zinc-900 border-2 border-orange-600/20 rounded-2xl space-y-2 shadow-2xl">
         <div class="flex justify-between items-center px-1">
-            <span class="text-[9px] uppercase font-black text-orange-600 tracking-widest italic">Gateway: Mandatory PAT</span>
+            <span class="text-[9px] uppercase font-black text-orange-600 tracking-widest italic">Gateway: Personal Access Token</span>
         </div>
-        <input type="password" id="ENTRY_TOKEN" placeholder="Paste GitHub PAT..." class="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-xs outline-none focus:border-orange-600 shadow-inner" onblur="validateToken()" onchange="validateToken()">
+        <input type="password" id="ENTRY_TOKEN" placeholder="Paste PAT..." class="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-xs outline-none focus:border-orange-600 shadow-inner" oninput="saveCreds()">
     </section>
 
     <section class="p-4 bg-zinc-900 border border-zinc-800 rounded-2xl space-y-3 shadow-xl">
         <div class="flex justify-between items-center px-1">
-            <span class="text-[9px] uppercase font-black text-zinc-600 tracking-widest italic">Phase 1: Infrastructure</span>
+            <span class="text-[9px] uppercase font-black text-zinc-600 tracking-widest italic">Phase 1: Batch Init (Comma Separated)</span>
         </div>
         <div class="flex gap-2">
-            <input type="text" id="INIT_REPO_NAME" placeholder="New Repo Name" class="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-xs outline-none text-blue-400 font-mono" oninput="saveCreds()">
-            <button onclick="fullSystemInit()" class="bg-orange-600 text-white font-black px-5 rounded-lg text-[9px] uppercase active:scale-95 transition-all">Init</button>
+            <input type="text" id="INIT_REPO_NAME" placeholder="repo1, repo2, repo3" class="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-xs outline-none text-blue-400 font-mono" oninput="saveCreds()">
+            <button onclick="batchInit()" class="bg-orange-600 text-white font-black px-5 rounded-lg text-[9px] uppercase active:scale-95 transition-all">Init</button>
         </div>
     </section>
 
     <div class="pt-2 px-1 flex justify-between items-end border-b border-zinc-900 pb-1">
         <h2 class="text-[10px] font-black text-orange-600 uppercase tracking-widest italic">Phase 2: File Fitter</h2>
-        <span class="text-[7px] text-zinc-600 uppercase font-bold tracking-tighter">Target Repo Required</span>
+        <span class="text-[7px] text-zinc-600 uppercase font-bold tracking-tighter">Target Destination</span>
     </div>
 
     <section class="space-y-2">
@@ -82,30 +77,130 @@
 <script>
 let currentPath = 'index.html';
 let buffers = { 'index.html': '', 'code.js': '', 'README.md': '' };
+let cachedUser = null;
 
 const WORKFLOWS = {
     static: `name: deploy_static\non: [push, workflow_dispatch]\npermissions: { contents: read, pages: write, id-token: write }\njobs:\n  deploy:\n    environment: { name: github-pages }\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/configure-pages@v5\n      - uses: actions/upload-pages-artifact@v3\n        with: { path: '.' }\n      - uses: actions/deploy-pages@v4`,
-    clearout: `name: clear_out\non: [workflow_dispatch]\njobs:\n  clear:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v2\n      - run: |\n          git config user.email "action@github.com"\n          git config user.name "Pete-Bot"\n          git checkout --orphan temp\n          git add -A\n          git commit -m "Clean Slate"\n          git branch -D main\n          git branch -m main\n          git push -f origin main`
+    clearout: `name: clear_out\non: [workflow_dispatch]\njobs:\n  clear:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v2\n      - run: |\n          git config user.email "bot@pmc.internal"\n          git config user.name "PMC-Bot"\n          git checkout --orphan temp\n          git add -A\n          git commit -m "Clean Slate"\n          git branch -D main\n          git branch -m main\n          git push -f origin main`
 };
 
 window.onload = () => {
     document.getElementById('ENTRY_TOKEN').value = localStorage.getItem('pmc_token') || '';
     document.getElementById('ENTRY_REPO').value = localStorage.getItem('pmc_repo') || '';
     document.getElementById('INIT_REPO_NAME').value = localStorage.getItem('pmc_init_repo') || '';
-    
-    // Load existing buffers if they exist in cache
     const savedBuffers = localStorage.getItem('pmc_buffers');
     if(savedBuffers) buffers = JSON.parse(savedBuffers);
-
-    if(document.getElementById('ENTRY_TOKEN').value) validateToken();
     switchBuffer('index.html');
 };
 
-async function validateToken() {
-    const token = document.getElementById('ENTRY_TOKEN').value;
-    const stat = document.getElementById('AUTH_STAT');
-    saveCreds();
-    if(!token) return;
+function saveCreds() {
+    localStorage.setItem('pmc_token', document.getElementById('ENTRY_TOKEN').value);
+    localStorage.setItem('pmc_repo', document.getElementById('ENTRY_REPO').value);
+    localStorage.setItem('pmc_init_repo', document.getElementById('INIT_REPO_NAME').value);
+}
+
+function saveActiveContent() {
+    buffers[currentPath] = document.getElementById('MAIN_TEXT').value;
+    localStorage.setItem('pmc_buffers', JSON.stringify(buffers));
+    updateStagingIcons();
+}
+
+function switchBuffer(newPath) {
+    buffers[currentPath] = document.getElementById('MAIN_TEXT').value;
+    currentPath = newPath;
+    document.getElementById('MAIN_TEXT').value = buffers[newPath] || '';
+    document.querySelectorAll('[id^="tab-"]').forEach(btn => btn.classList.remove('active-tab'));
+    document.getElementById(`tab-${newPath}`).classList.add('active-tab');
+    updateStagingIcons();
+}
+
+function updateStagingIcons() {
+    Object.keys(buffers).forEach(key => {
+        const el = document.getElementById(`status-${key}`);
+        if(buffers[key] && buffers[key].trim().length > 0) el.classList.add('staged');
+        else el.classList.remove('staged');
+    });
+}
+
+function updateLog(msg) { document.getElementById('UI_LOG').innerText = msg; }
+
+async function getUsername(pat) {
+    if(cachedUser) return cachedUser;
+    const r = await fetch('https://api.github.com/user', { headers: {'Authorization':`token ${pat}`} });
+    if(r.ok) { const d = await r.json(); cachedUser = d.login; return cachedUser; }
+    return null;
+}
+
+async function batchInit() {
+    const pat = document.getElementById('ENTRY_TOKEN').value;
+    const rawNames = document.getElementById('INIT_REPO_NAME').value;
+    if(!pat || !rawNames) return alert("PAT and Name(s) required.");
+    
+    const user = await getUsername(pat);
+    if(!user) return updateLog("Auth Error: Check PAT.");
+
+    const names = rawNames.split(',').map(n => n.trim()).filter(n => n.length > 0);
+    updateLog(`Initialising ${names.length} repositories...`);
+
+    for(let name of names) {
+        try {
+            const res = await fetch('https://api.github.com/user/repos', {
+                method: 'POST',
+                headers: {'Authorization': `token ${pat}`, 'Content-Type': 'application/json'},
+                body: JSON.stringify({ name: name, auto_init: true })
+            });
+            if(res.ok) {
+                updateLog(`Created ${name}. Injecting Workflows...`);
+                await pushFile(pat, user, name, '.github/workflows/static.yml', WORKFLOWS.static);
+                await pushFile(pat, user, name, '.github/workflows/clear_out.yml', WORKFLOWS.clearout);
+            } else { updateLog(`Error on ${name}: ${res.status}`); }
+        } catch(e) { updateLog(`Network Error on ${name}`); }
+    }
+    updateLog("Batch Initialisation Complete.");
+}
+
+async function executeBatchDeployment() {
+    const pat = document.getElementById('ENTRY_TOKEN').value;
+    const repo = document.getElementById('ENTRY_REPO').value;
+    const files = Object.keys(buffers).filter(k => buffers[k].trim().length > 0);
+    if(!pat || !repo || files.length === 0) return alert("Missing Assets or PAT.");
+
+    const user = await getUsername(pat);
+    if(!user) return updateLog("Auth Error: Check PAT.");
+
+    updateLog(`Pushing to ${user}/${repo}...`);
+    for (const file of files) { await pushFile(pat, user, repo, file, buffers[file]); }
+    updateLog("Batch Commissioned Successfully.");
+}
+
+async function pushFile(pat, user, repo, path, content) {
+    const url = `https://api.github.com/repos/${user}/${repo}/contents/${path}`;
+    let sha = null;
+    try {
+        const g = await fetch(url, {headers:{'Authorization':`token ${pat}`}});
+        if(g.ok) { const d = await g.json(); sha = d.sha; }
+
+        return await fetch(url, {
+            method: 'PUT',
+            headers: {'Authorization':`token ${pat}`,'Content-Type':'application/json'},
+            body: JSON.stringify({
+                message: "PMC v4.1 Update",
+                content: btoa(unescape(encodeURIComponent(content))),
+                sha: sha
+            })
+        });
+    } catch(e) { updateLog(`Push Error: ${path}`); }
+}
+
+function clearCurrentBuffer() {
+    document.getElementById('MAIN_TEXT').value = '';
+    saveActiveContent();
+}
+
+function hardReset() {
+    if(confirm("Purge Local Cache?")) { localStorage.clear(); location.reload(); }
+}
+
     stat.innerText = "CHECKING GATEWAY...";
     try {
         const r = await fetch('https://api.github.com/user', { headers: {'Authorization':`token ${token}`} });
