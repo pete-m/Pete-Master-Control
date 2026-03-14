@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>PMC v3.9</title>
+    <!--Peter Maben woz here -->
+    
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
     .active-tab { border-bottom: 3px solid #ea580c !important; color: #ea580c !important; background: #18181b !important; }
@@ -214,9 +216,7 @@ function clearCurrentBuffer() {
 function hardReset() {
     if(confirm("Purge Local Cache?")) { localStorage.clear(); location.reload(); }
 }
-</script>
-</body>
-</html>
+
             stat.className = "text-[8px] uppercase tracking-[0.2em] font-black invalid-token";
         }
     } catch(e) { stat.innerText = "GATEWAY: ERROR"; }
@@ -444,16 +444,6 @@ async function pushFile(pat, repo, path, content) {
     });
 }
 
-function clearCurrentBuffer() {
-    document.getElementById('MAIN_TEXT').value = '';
-    buffers[currentPath] = '';
-    updateStagingIcons();
-}
-
-function hardReset() {
-    if(confirm("Purge Local Cache?")) { localStorage.clear(); location.reload(); }
-}
-
     if(!pat || !name) return alert("Credentials Missing.");
     
     updateLog("Phase 1: Creating Repo...");
@@ -662,6 +652,6 @@ function hardReset() {
         localStorage.clear();
         location.reload(); }
 </script>
-<!--Peter Maben woz here -->
+
 </body>
 </html>
