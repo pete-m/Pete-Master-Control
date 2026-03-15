@@ -104,8 +104,6 @@
         };
     }
 })();
-                        message: `PMC Update: ${activeTab}`,
-                        content: btoa(unescape(encodeURIComponent(content))),
                         sha: sha
                     })
                 });
