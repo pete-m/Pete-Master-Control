@@ -4,80 +4,80 @@
     <meta charset="UTF-8">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PMC v0.3.9</title>
+    <title>PMC v0.4.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .status-box { font-size: 7px; font-weight: 900; padding: 4px 8px; border: 1px solid #27272a; border-radius: 4px; color: #3f3f46; text-transform: uppercase; }
         .tab-btn { transition: all 0.2s; }
-    </script>
-    <script>window.PMC_VER = "v0.3.9";</script>
+        .emerald-handshake { color: #10b981 !important; text-shadow: 0 0 10px rgba(16, 185, 129, 0.3); }
+    </style>
+    <script>window.PMC_VER = "v0.4.0";</script>
 </head>
 <body class="bg-zinc-950 text-zinc-300 p-4 font-sans min-h-screen">
     <div class="max-w-md mx-auto space-y-3 pb-10">
         
         <header class="p-4 bg-zinc-900 border border-zinc-800 rounded-2xl flex justify-between items-center shadow-xl">
             <div>
-                <h1 id="VER_ID" class="text-xl font-black text-zinc-700 uppercase italic tracking-tighter transition-colors duration-700">PMC v0.3.9</h1>
-                <p class="text-[8px] text-zinc-600 uppercase tracking-[0.2em] font-bold mt-1">Dual-Log Handshake Build</p>
+                <h1 id="VER_ID" class="text-xl font-black text-zinc-700 uppercase italic tracking-tighter transition-all duration-700">PMC v0.4.0</h1>
+                <p class="text-[8px] text-zinc-600 uppercase tracking-[0.2em] font-bold mt-1">Stabilised Build | Fitter Active</p>
             </div>
-            <button onclick="location.reload(true)" class="text-[9px] font-bold text-red-500 uppercase">[ Hard Reload ]</button>
+            <button onclick="location.reload(true)" class="text-[9px] font-bold text-red-500 uppercase border border-red-900/30 px-2 py-1 rounded">Hard Reload</button>
         </header>
 
-        <div id="UI_LOG" class="bg-zinc-950 border border-zinc-900 rounded-xl p-2 text-[10px] font-mono text-zinc-500 text-center italic h-20 overflow-y-auto">
-            [System] Logic Streamed. Awaiting PAT...
+        <div id="UI_LOG" class="bg-zinc-950 border border-zinc-900 rounded-xl p-2 text-[10px] font-mono text-zinc-500 text-center italic h-24 overflow-y-auto flex flex-col-reverse shadow-inner">
+            <div class="py-1">[System] Logic Streamed. Awaiting PAT...</div>
         </div>
 
         <section class="p-4 bg-zinc-900 border-2 border-orange-600/20 rounded-2xl space-y-2">
             <span class="text-[9px] uppercase font-black text-orange-600 tracking-widest italic px-1">Gateway: PAT</span>
             <div class="flex gap-2">
-                <input type="password" id="ENTRY_TOKEN" placeholder="Paste PAT..." class="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-xs outline-none focus:border-orange-600 shadow-inner">
+                <input type="password" id="ENTRY_TOKEN" placeholder="Paste PAT..." class="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-xs outline-none focus:border-orange-600 shadow-inner text-orange-500 font-mono">
                 <button id="HANDSHAKE_BTN" 
-                        onclick="const l=document.getElementById('UI_LOG'); l.innerHTML='<div class=\'text-blue-400\'>[Index] Handshake Attempted...</div>'+l.innerHTML;"
-                        class="bg-zinc-800 text-orange-500 font-black px-4 rounded-lg text-[9px] uppercase border border-zinc-700 active:bg-orange-600 active:text-white">
+                        class="bg-zinc-800 text-orange-500 font-black px-4 rounded-lg text-[9px] uppercase border border-zinc-700 active:bg-orange-600 active:text-white transition-all">
                     Verify
                 </button>
             </div>
         </section>
 
         <section class="p-4 bg-zinc-900 border border-zinc-800 rounded-2xl space-y-3">
-            <span class="text-[9px] uppercase font-black text-zinc-600 tracking-widest italic px-1">Phase 1: Batch Init / Purge</span>
+            <span class="text-[9px] uppercase font-black text-zinc-600 tracking-widest italic px-1">Phase 1: Navigator Init</span>
             <div class="flex gap-2">
-                <input type="text" id="INIT_REPO_NAME" placeholder="repo-name OR repos: [list]" class="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-xs outline-none text-blue-400 font-mono">
-                <button id="INIT_BTN" class="bg-orange-600 text-white font-black px-5 rounded-lg text-[9px] uppercase italic">Execute</button>
+                <input type="text" id="INIT_REPO_NAME" placeholder="repo-name OR [list]" class="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-xs outline-none text-blue-400 font-mono">
+                <button id="INIT_BTN" class="bg-zinc-800 text-zinc-500 font-black px-5 rounded-lg text-[9px] uppercase italic border border-zinc-700">Execute</button>
             </div>
         </section>
 
-        <section id="PHASE_2_UI" class="space-y-2 opacity-30 pointer-events-none transition-opacity duration-500">
+        <section id="PHASE_2_UI" class="space-y-2 opacity-30 pointer-events-none transition-all duration-500 transform translate-y-1">
             <div class="pt-2 px-1 flex justify-between items-end border-b border-zinc-900 pb-1">
                 <h2 class="text-[10px] font-black text-orange-600 uppercase tracking-widest italic">Phase 2: File Fitter</h2>
             </div>
+            
             <input type="text" id="ENTRY_REPO" placeholder="Target Repository Name" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs outline-none text-blue-400 font-mono">
 
             <div class="grid grid-cols-5 gap-1">
-                <button id="tab-index.html" class="tab-btn bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase">HTML</button>
-                <button id="tab-code.js" class="tab-btn bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase">JS</button>
-                <button id="tab-style.css" class="tab-btn bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase">CSS</button>
-                <button id="tab-manifest.js" class="tab-btn bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase">Manifest</button>
-                <button id="tab-README.md" class="tab-btn bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase">MD</button>
+                <button id="tab-index.html" class="tab-btn bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase text-zinc-500 hover:text-orange-500">HTML</button>
+                <button id="tab-code.js" class="tab-btn bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase text-zinc-500 hover:text-orange-500">JS</button>
+                <button id="tab-style.css" class="tab-btn bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase text-zinc-500 hover:text-orange-500">CSS</button>
+                <button id="tab-manifest.js" class="tab-btn bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase text-zinc-500 hover:text-orange-500">Manifest</button>
+                <button id="tab-README.md" class="tab-btn bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase text-zinc-500 hover:text-orange-500">MD</button>
             </div>
 
             <div class="relative">
-                <textarea id="MAIN_TEXT" class="w-full h-64 bg-zinc-900 border border-zinc-800 rounded-b-xl rounded-tr-xl p-4 text-[10px] font-mono focus:border-orange-600 outline-none leading-relaxed resize-none" placeholder="Paste code here..."></textarea>
+                <textarea id="MAIN_TEXT" class="w-full h-64 bg-zinc-900 border border-zinc-800 rounded-b-xl rounded-tr-xl p-4 text-[10px] font-mono focus:border-orange-600 outline-none leading-relaxed resize-none shadow-2xl" placeholder="Paste code here..."></textarea>
             </div>
 
-            <button id="PUSH_TRIGGER" class="w-full bg-zinc-800 border border-zinc-700 text-zinc-400 font-bold py-3 rounded-lg uppercase text-[9px] tracking-[0.2em] mt-3">Commission Batch</button>
+            <button id="PUSH_TRIGGER" class="w-full bg-zinc-800 border border-zinc-700 text-zinc-500 font-bold py-3 rounded-lg uppercase text-[9px] tracking-[0.2em] mt-3 hover:bg-zinc-700 active:bg-orange-600 active:text-white transition-colors">Commission Batch</button>
         </section>
     </div>
 
     <script>
-        fetch('./code.js?t=' + Date.now())
-            .then(r => r.text())
-            .then(code => {
-                const s = document.createElement('script');
-                s.textContent = code;
-                document.body.appendChild(s);
-            });
+        (function() {
+            const cacheBust = Date.now();
+            const script = document.createElement('script');
+            script.src = `./code.js?v=${cacheBust}`;
+            script.async = true;
+            document.body.appendChild(script);
+        })();
     </script>
 </body>
-    </html>
-        
+</html>
