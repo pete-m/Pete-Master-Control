@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en-GB">
 <head>
-    <meta charset="UTF-8"> 
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PMC v0.2.8</title>
+    <title>PMC v0.2.9</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -11,14 +11,14 @@
     <div class="max-w-md mx-auto space-y-3 pb-10">
         <header class="p-4 bg-zinc-900 border border-zinc-800 rounded-2xl flex justify-between items-center shadow-xl">
             <div>
-                <h1 class="text-xl font-black text-orange-600 uppercase italic tracking-tighter leading-none">PMC v0.2.8</h1>
-                <p class="text-[8px] text-zinc-600 uppercase tracking-[0.2em] font-bold mt-1">Force-Sync Build</p>
+                <h1 id="UI_VERSION_HEADER" class="text-xl font-black text-orange-600 uppercase italic tracking-tighter leading-none">PMC v0.2.9</h1>
+                <p class="text-[8px] text-zinc-600 uppercase tracking-[0.2em] font-bold mt-1">Narrative Build</p>
             </div>
             <button onclick="hardReset()" class="text-[9px] font-bold text-red-500/40 uppercase hover:text-red-500">[ Wipe Cache ]</button>
         </header>
 
         <div id="UI_LOG" class="bg-zinc-950 border border-zinc-900 rounded-xl p-2 text-[10px] font-mono text-zinc-500 text-center italic shadow-inner h-20 overflow-y-auto">
-            [System] Attempting Force Load...
+            [System] Initialising...
         </div>
 
         <section class="p-4 bg-zinc-900 border-2 border-orange-600/20 rounded-2xl space-y-2 shadow-2xl">
@@ -67,23 +67,17 @@
     </div>
 
     <script>
+        const version = "v0.2.9";
         const log = (m) => document.getElementById('UI_LOG').innerHTML = m + '<br>' + document.getElementById('UI_LOG').innerHTML;
         
-        fetch('./code.js?v=' + Date.now())
-            .then(r => {
-                if(!r.ok) throw new Error("File not found");
-                return r.text();
-            })
+        fetch('./code.js?v=' + version)
+            .then(r => r.text())
             .then(code => {
                 const s = document.createElement('script');
                 s.textContent = code;
                 document.body.appendChild(s);
-                log("[System] Code Injected Successfully.");
             })
-            .catch(e => {
-                log("<span class='text-red-500'>[Error] " + e.message + "</span>");
-                log("Verify code.js is in the same folder.");
-            });
+            .catch(e => log("<span class='text-red-500'>[Load Error] Check code.js existence.</span>"));
     </script>
 </body>
 </html>
