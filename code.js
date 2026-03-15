@@ -1,7 +1,7 @@
 /* PROJECT: PMC (Phase 2)
    AUTHOR: Peter Maben with Gemini
-   VERSION: v0.4.2
-   STATUS: Stabilised Fitter Build
+   VERSION: v0.4.3
+   STATUS: Hard-Wired Initialization
 */
 
 (function() {
@@ -15,39 +15,40 @@
         if (el) el.innerHTML = `<div class="border-b border-zinc-900 py-1 font-mono text-[9px] uppercase tracking-tighter text-emerald-500">${m}</div>` + el.innerHTML;
     };
 
-    const attachLogic = () => {
-        const handshakeBtn = document.getElementById('HANDSHAKE_BTN');
-        const initBtn = document.getElementById('INIT_BTN');
-        const pushBtn = document.getElementById('PUSH_TRIGGER');
+    const boot = () => {
+        const hBtn = document.getElementById('HANDSHAKE_BTN');
+        const iBtn = document.getElementById('INIT_BTN');
+        const pBtn = document.getElementById('PUSH_TRIGGER');
 
-        // Check if elements exist before proceeding
-        if (!handshakeBtn || !initBtn || !pushBtn) return false;
+        if (!hBtn || !iBtn || !pBtn) {
+            return false; // Elements not ready yet
+        }
 
-        log("ENGINE WARM. BUTTONS HOOKED.");
+        log("SYSTEM: BUTTONS LOCATED.");
 
-        // Phase 0: Handshake
-        handshakeBtn.onclick = async () => {
+        // 0. Handshake
+        hBtn.onclick = async () => {
             const pat = document.getElementById('ENTRY_TOKEN').value.trim();
-            log("📡 Verifying...");
+            log("📡 VERIFYING...");
             try {
                 const r = await fetch('https://api.github.com/user', { headers: { 'Authorization': `token ${pat}` } });
                 if (r.ok) {
                     const d = await r.json();
                     sessionPat = pat; userLogin = d.login;
-                    log(`✅ Verified: ${d.login}`);
+                    log(`✅ OK: ${d.login}`);
                     document.getElementById('VER_ID').style.color = "#10b981";
                     ['PHASE_1_UI', 'PHASE_2_UI'].forEach(id => {
                         const el = document.getElementById(id);
                         if (el) { el.style.opacity = "1"; el.style.pointerEvents = "auto"; }
                     });
-                } else { log(`❌ Denied: ${r.status}`); }
-            } catch (e) { log("❌ Connection Refused"); }
+                } else { log(`❌ DENIED: ${r.status}`); }
+            } catch (e) { log("❌ NO CONNECTION"); }
         };
 
-        // Phase 1: Navigator (Bare Repo Support)
-        initBtn.onclick = async () => {
+        // 1. Navigator (Bare Repo Support)
+        iBtn.onclick = async () => {
             const repoName = document.getElementById('INIT_REPO_NAME').value.trim();
-            log(`[Navigator] Creating ${repoName}...`);
+            log(`INIT: ${repoName}...`);
             try {
                 const r = await fetch('https://api.github.com/user/repos', {
                     method: 'POST',
@@ -55,13 +56,13 @@
                     body: JSON.stringify({ name: repoName, auto_init: true })
                 });
                 if (r.ok) {
-                    log(`✅ Repo Ready.`);
+                    log(`✅ REPO CREATED.`);
                     document.getElementById('ENTRY_REPO').value = repoName;
-                } else { log(`❌ Failed: ${r.status}`); }
-            } catch (e) { log("❌ Error"); }
+                } else { log(`❌ INIT FAIL: ${r.status}`); }
+            } catch (e) { log("❌ ERROR"); }
         };
 
-        // Phase 2: Tabs
+        // 2. Tabs
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.onclick = () => {
                 buffer[activeTab] = document.getElementById('MAIN_TEXT').value;
@@ -69,21 +70,20 @@
                 btn.style.borderColor = "#ea580c"; btn.style.color = "#ea580c";
                 activeTab = btn.id.replace('tab-', '');
                 document.getElementById('MAIN_TEXT').value = buffer[activeTab];
-                log(`Focus: ${activeTab}`);
+                log(`TAB: ${activeTab}`);
             };
         });
 
-        // Phase 2: Commission (Bare Repo Name Detection)
-        pushBtn.onclick = async () => {
+        // 3. Commission (Bare Repo Name Detection)
+        pBtn.onclick = async () => {
             const repoInput = document.getElementById('ENTRY_REPO').value.trim();
             const content = document.getElementById('MAIN_TEXT').value;
             
-            if (!repoInput || !content || !sessionPat) return log("⚠️ Data Missing");
+            if (!repoInput || !content || !sessionPat) return log("⚠️ DATA MISSING");
             
-            // Logic: If no '/', prepend userLogin automatically
             const path = repoInput.includes('/') ? repoInput : `${userLogin}/${repoInput}`;
+            log(`🚀 PUSHING TO ${path}...`);
             
-            log(`🚀 Commissioning ${activeTab} to ${path}...`);
             try {
                 const res = await fetch(`https://api.github.com/repos/${path}/contents/${activeTab}`, {
                     headers: { 'Authorization': `token ${sessionPat}` }
@@ -101,28 +101,23 @@
                 if (push.ok) log(`✨ ${activeTab} STABILISED.`);
                 else {
                     const err = await push.json();
-                    log(`❌ Push Failed: ${err.message}`);
+                    log(`❌ FAIL: ${err.message}`);
                 }
-            } catch (e) { log(`❌ Error: ${e.message}`); }
+            } catch (e) { log(`❌ ERROR: ${e.message}`); }
         };
 
         return true;
     };
 
-    // Retry loop to ensure buttons are hooked even if script loads fast
-    const retryHook = setInterval(() => {
-        if (attachLogic()) {
-            clearInterval(retryHook);
-        }
-    }, 100);
-
-})();
-    else run();
-})();
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
+    // Immediate check + fallback interval
+    if (!boot()) {
+        const retry = setInterval(() => {
+            if (boot()) {
+                log("SYSTEM: LATE HOOK SUCCESS.");
+                clearInterval(retry);
+            }
+        }, 200);
+        // Stop trying after 5 seconds to save battery
+        setTimeout(() => clearInterval(retry), 5000);
     }
 })();
