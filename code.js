@@ -1,111 +1,161 @@
 /* PROJECT: PMC (Phase 2)
    VERSION: v0.4.0 (Stabilised Build)
-   LOGIC: Global Orchestrator & Handshake Protocol
-   TARGET: Mobile/Desktop Cross-Compatibility
+   LOGIC: Buffered Fitter & SHA-Validated Push
 */
 
 (function() {
-    /**
-     * System Log: Updates the UI_LOG element with timestamped or status entries.
-     * @param {string} msg - The message to display.
-     */
+    // Persistent memory for the Fitter session
+    const fitterBuffer = {
+        'index.html': '',
+        'code.js': '',
+        'style.css': '',
+        'manifest.js': '',
+        'README.md': ''
+    };
+    
+    let activeTab = 'index.html';
+
     const log = (msg) => {
         const el = document.getElementById('UI_LOG');
         if (el) {
-            // Using afterbegin to keep the latest log at the top of the scroll
             el.insertAdjacentHTML('afterbegin', `<div class="border-b border-zinc-900 py-1 font-mono text-[9px] uppercase tracking-tight">${msg}</div>`);
         }
     };
 
-    /**
-     * Primary Event Listener: Captures all button interactions globally 
-     * to prevent event-ghosting on mobile touch targets.
-     */
     document.addEventListener('click', async function (e) {
         const target = e.target.closest('button');
         if (!target) return;
 
-        // --- HANDSHAKE LOGIC ---
+        // --- 1. THE EMERALD HANDSHAKE ---
         if (target.id === 'HANDSHAKE_BTN') {
-            const patInput = document.getElementById('ENTRY_TOKEN');
-            const pat = patInput.value.trim();
+            const pat = document.getElementById('ENTRY_TOKEN').value.trim();
+            if(!pat) return log("<span class='text-red-500'>❌ PAT REQUIRED</span>");
+            
+            target.disabled = true;
+            target.innerText = "...";
+            await verifyIdentity(pat);
+            target.disabled = false;
+            target.innerText = "Verify";
+        }
 
-            if(!pat) {
-                log("<span class='text-red-500'>[Security] PAT Required for Gateway</span>");
-                return;
+        // --- 2. THE BUFFERED FITTER (Tab Switching) ---
+        if (target.classList.contains('tab-btn')) {
+            const textArea = document.getElementById('MAIN_TEXT');
+            const newTab = target.id.replace('tab-', '');
+
+            fitterBuffer[activeTab] = textArea.value;
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('text-orange-500', 'border-orange-600');
+                btn.classList.add('text-zinc-500', 'border-zinc-800');
+            });
+            target.classList.add('text-orange-500', 'border-orange-600');
+            target.classList.remove('text-zinc-500', 'border-zinc-800');
+
+            activeTab = newTab;
+            textArea.value = fitterBuffer[activeTab];
+            log(`[Fitter] Focused: ${activeTab}`);
+        }
+
+        // --- 3. THE COMMISSION BATCH (GitHub Push) ---
+        if (target.id === 'PUSH_TRIGGER') {
+            const repoInput = document.getElementById('ENTRY_REPO').value.trim();
+            const content = document.getElementById('MAIN_TEXT').value;
+
+            if(!repoInput || !content || !window.SESSION_PAT) {
+                return log("<span class='text-orange-500'>⚠️ LOCK ERROR: Check PAT/Repo/Content</span>");
             }
 
-            // UI Feedback during async operation
+            // Ensure repo format is correct (user/repo)
+            // If the user only provides 'repo-name', we'll use the authenticated username
+            let repoPath = repoInput;
+            if (!repoPath.includes('/')) {
+                repoPath = `${window.USER_LOGIN}/${repoInput}`;
+            }
+
             target.disabled = true;
-            const originalText = target.innerText;
-            target.innerText = "VERIFYING...";
-            
-            await verifyIdentity(pat);
-            
+            target.innerText = "COMMISSIONING...";
+            await executePush(repoPath, activeTab, content);
             target.disabled = false;
-            target.innerText = originalText;
-        }
-
-        // --- FITTER TAB LOGIC ---
-        if (target.classList.contains('tab-btn')) {
-            const fileName = target.id.split('-')[1];
-            
-            // Reset tab styles
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.style.color = "#52525b"; // zinc-500
-                btn.style.borderColor = "#27272a"; // zinc-800
-            });
-
-            // Highlight active tab
-            target.style.color = "#ea580c"; // orange-600
-            target.style.borderColor = "#ea580c";
-            
-            log(`[Fitter] File Context: ${fileName}`);
-        }
-
-        // --- COMMISSION LOGIC (Placeholder for v0.4.1) ---
-        if (target.id === 'PUSH_TRIGGER') {
-            const repo = document.getElementById('ENTRY_REPO').value.trim();
-            if(!repo) return log("<span class='text-orange-500'>[Fitter] Target Repo Required</span>");
-            log(`[Batch] Commissioning upload to: ${repo}...`);
+            target.innerText = "Commission Batch";
         }
     });
 
-    /**
-     * GitHub API Verification: Validates the PAT and unlocks Phase 2 UI.
-     * @param {string} pat - The Personal Access Token.
-     */
     async function verifyIdentity(pat) {
-        log("📡 Initiating Emerald Handshake...");
-        
+        log("📡 Querying Gateway...");
         try {
-            const response = await fetch('https://api.github.com/user', { 
-                headers: {
-                    'Authorization': `token ${pat}`,
-                    'Accept': 'application/vnd.github.v3+json'
-                } 
+            const r = await fetch('https://api.github.com/user', { 
+                headers: {'Authorization': `token ${pat}`} 
+            });
+            if(r.ok) {
+                const d = await r.json();
+                window.USER_LOGIN = d.login; // Store login for path construction
+                log(`<span class="text-emerald-400">✅ Handshake: ${d.login}</span>`);
+                unlockUI(pat);
+            } else {
+                log(`<span class="text-red-500">❌ Access Denied: ${r.status}</span>`);
+            }
+        } catch(e) { log(`❌ Error: ${e.message}`); }
+    }
+
+    function unlockUI(pat) {
+        window.SESSION_PAT = pat;
+        const verId = document.getElementById('VER_ID');
+        const phase2 = document.getElementById('PHASE_2_UI');
+        
+        verId.innerText = "PMC v0.4.0";
+        verId.style.color = "#10b981";
+        verId.classList.remove('italic');
+        
+        phase2.style.opacity = "1";
+        phase2.style.pointerEvents = "auto";
+        phase2.classList.remove('opacity-30');
+        log("[System] Fitter Online. Awaiting Assets.");
+    }
+
+    async function executePush(repo, filename, content) {
+        const pat = window.SESSION_PAT;
+        log(`[Batch] Checking SHA for ${filename}...`);
+
+        try {
+            const getRef = await fetch(`https://api.github.com/repos/${repo}/contents/${filename}`, {
+                headers: {'Authorization': `token ${pat}`}
             });
             
-            if(response.ok) {
-                const userData = await response.json();
-                log(`<span class="text-emerald-400">✅ Authenticated: ${userData.login}</span>`);
-                
-                unlockPhase2(pat);
-            } else {
-                log(`<span class="text-red-500">❌ GitHub Denied: ${response.status}</span>`);
+            let sha = "";
+            if (getRef.ok) {
+                const fileData = await getRef.json();
+                sha = fileData.sha;
+                log(`[Batch] Existing SHA found.`);
             }
-        } catch(error) { 
-            log(`<span class="text-red-500">❌ Network Error: ${error.message}</span>`); 
+
+            log(`[Batch] Encrypting & Uploading...`);
+            const pushReq = await fetch(`https://api.github.com/repos/${repo}/contents/${filename}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${pat}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: `PMC Update: ${filename} (v0.4.0)`,
+                    content: btoa(unescape(encodeURIComponent(content))),
+                    sha: sha || null
+                })
+            });
+
+            if (pushReq.ok) {
+                log(`<span class="text-emerald-500">✨ ${filename} Commissioned to ${repo}</span>`);
+            } else {
+                const err = await pushReq.json();
+                log(`❌ Push Failed: ${err.message}`);
+            }
+        } catch (e) {
+            log(`❌ Error: ${e.message}`);
         }
     }
 
-    /**
-     * UI State Transition: Activates the Phase 2 Fitter.
-     * @param {string} pat - Validated token to be held in volatile memory.
-     */
-    function unlockPhase2(pat) {
-        const verId = document.getElementById('VER_ID');
-        const phase2 = document.getElementById('PHASE_2_UI');
+    log("[System] Logic v0.4.0 Streamed.");
+})();
         
         // Apply Emerald Handshake Visuals
         verId.innerText = "PMC v0.4.0";
