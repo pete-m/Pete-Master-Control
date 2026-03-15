@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>PMC v0.1</title>
+<title>PMC v0.2.1</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
     .active-tab { border-bottom: 3px solid #ea580c !important; color: #ea580c !important; background: #18181b !important; }
@@ -16,27 +16,19 @@
 <div class="max-w-md mx-auto space-y-3 pb-10">
     <header class="p-4 bg-zinc-900 border border-zinc-800 rounded-2xl flex justify-between items-center shadow-xl">
         <div>
-            <h1 class="text-xl font-black text-orange-600 uppercase italic tracking-tighter leading-none">PMC v0.1</h1>
-            <p id="AUTH_STAT" class="text-[8px] text-zinc-600 uppercase tracking-[0.2em] font-bold mt-1">Standalone</p>
+            <h1 class="text-xl font-black text-orange-600 uppercase italic tracking-tighter leading-none">PMC v0.2.1</h1>
+            <p id="AUTH_STAT" class="text-[8px] text-zinc-600 uppercase tracking-[0.2em] font-bold mt-1">Manifest Asset Live</p>
         </div>
         <button onclick="hardReset()" class="text-[9px] font-bold text-red-500/40 uppercase hover:text-red-500">[ Wipe Cache ]</button>
     </header>
 
-    <div id="UI_LOG" class="bg-zinc-950 border border-zinc-900 rounded-xl p-2 text-[10px] font-mono text-zinc-500 text-center italic shadow-inner">
-        Ready.
+    <div id="UI_LOG" class="bg-zinc-950 border border-zinc-900 rounded-xl p-2 text-[10px] font-mono text-zinc-500 text-center italic shadow-inner h-16 overflow-y-auto">
+        System Ready.
     </div>
 
     <section class="p-4 bg-zinc-900 border-2 border-orange-600/20 rounded-2xl space-y-2 shadow-2xl">
         <span class="text-[9px] uppercase font-black text-orange-600 tracking-widest italic px-1">Gateway: PAT</span>
         <input type="password" id="ENTRY_TOKEN" placeholder="Paste PAT..." class="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-xs outline-none focus:border-orange-600 shadow-inner" oninput="saveCreds()">
-    </section>
-
-    <section class="p-4 bg-zinc-900 border border-zinc-800 rounded-2xl space-y-3 shadow-xl">
-        <span class="text-[9px] uppercase font-black text-zinc-600 tracking-widest italic px-1">Phase 1: Batch Init</span>
-        <div class="flex gap-2">
-            <input type="text" id="INIT_REPO_NAME" placeholder="repo1, repo2" class="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-xs outline-none text-blue-400 font-mono" oninput="saveCreds()">
-            <button onclick="batchInit()" class="bg-orange-600 text-white font-black px-5 rounded-lg text-[9px] uppercase active:scale-95 transition-all">Init</button>
-        </div>
     </section>
 
     <section class="space-y-2">
@@ -45,42 +37,40 @@
         </div>
         <input type="text" id="ENTRY_REPO" placeholder="Target Repository Name" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs outline-none text-blue-400 font-mono shadow-xl focus:border-orange-600 transition-all" oninput="saveCreds()">
 
-        <div class="grid grid-cols-3 gap-1">
-            <button id="tab-index.html" onclick="switchBuffer('index.html')" class="bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[8px] font-black uppercase transition-all">index.html</button>
-            <button id="tab-code.js" onclick="switchBuffer('code.js')" class="bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[8px] font-black uppercase transition-all">code.js</button>
-            <button id="tab-README.md" onclick="switchBuffer('README.md')" class="bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[8px] font-black uppercase transition-all">ReadMe.md</button>
+        <div class="grid grid-cols-5 gap-1">
+            <button id="tab-index.html" onclick="switchBuffer('index.html')" class="bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase transition-all">HTML</button>
+            <button id="tab-code.js" onclick="switchBuffer('code.js')" class="bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase transition-all">JS</button>
+            <button id="tab-style.css" onclick="switchBuffer('style.css')" class="bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase transition-all">CSS</button>
+            <button id="tab-manifest.js" onclick="switchBuffer('manifest.js')" class="bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase transition-all">Manifest</button>
+            <button id="tab-README.md" onclick="switchBuffer('README.md')" class="bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase transition-all">MD</button>
         </div>
 
         <div class="relative">
-            <textarea id="MAIN_TEXT" oninput="saveActiveContent()" class="w-full h-40 bg-zinc-900 border border-zinc-800 rounded-b-xl rounded-tr-xl p-4 text-[10px] font-mono focus:border-orange-600 outline-none shadow-inner leading-relaxed resize-none" placeholder="Paste asset code..."></textarea>
+            <textarea id="MAIN_TEXT" oninput="saveActiveContent()" class="w-full h-48 bg-zinc-900 border border-zinc-800 rounded-b-xl rounded-tr-xl p-4 text-[10px] font-mono focus:border-orange-600 outline-none shadow-inner leading-relaxed resize-none" placeholder="Paste code here..."></textarea>
             <button onclick="clearCurrentBuffer()" class="absolute bottom-2 right-2 text-red-500/30 hover:text-red-500 text-[8px] font-bold uppercase tracking-tighter">[ Clear ]</button>
         </div>
 
         <div class="p-3 bg-zinc-900 border border-zinc-800 rounded-xl space-y-3 shadow-xl">
-            <div id="STAGING_BAR" class="flex justify-center gap-3">
+            <div id="STAGING_BAR" class="flex flex-wrap justify-center gap-2">
                 <div id="status-index.html" class="border border-dashed border-zinc-800 px-2 py-0.5 rounded text-[7px] font-bold opacity-30 tracking-tighter">HTML</div>
-                <div id="status-code.js" class="border border-dashed border-zinc-800 px-2 py-0.5 rounded text-[7px] font-bold opacity-30 tracking-tighter">SCRIPT</div>
-                <div id="status-README.md" class="border border-dashed border-zinc-800 px-2 py-0.5 rounded text-[7px] font-bold opacity-30 tracking-tighter">README</div>
+                <div id="status-code.js" class="border border-dashed border-zinc-800 px-2 py-0.5 rounded text-[7px] font-bold opacity-30 tracking-tighter">JS</div>
+                <div id="status-style.css" class="border border-dashed border-zinc-800 px-2 py-0.5 rounded text-[7px] font-bold opacity-30 tracking-tighter">CSS</div>
+                <div id="status-manifest.js" class="border border-dashed border-zinc-800 px-2 py-0.5 rounded text-[7px] font-bold opacity-30 tracking-tighter">MANIFEST</div>
+                <div id="status-README.md" class="border border-dashed border-zinc-800 px-2 py-0.5 rounded text-[7px] font-bold opacity-30 tracking-tighter">MD</div>
             </div>
-            <button id="PUSH_TRIGGER" onclick="executeBatchDeployment()" class="w-full bg-zinc-800 border border-zinc-700 text-zinc-400 font-bold py-3 rounded-lg uppercase text-[9px] tracking-[0.2em] transition-all hover:bg-zinc-700 hover:text-white">Commission Assets</button>
+            <button id="PUSH_TRIGGER" onclick="executeBatchDeployment()" class="w-full bg-zinc-800 border border-zinc-700 text-zinc-400 font-bold py-3 rounded-lg uppercase text-[9px] tracking-[0.2em] transition-all hover:bg-zinc-700 hover:text-white">Commission Batch</button>
         </div>
     </section>
 </div>
 
 <script>
 let currentPath = 'index.html';
-let buffers = { 'index.html': '', 'code.js': '', 'README.md': '' };
+let buffers = { 'index.html': '', 'code.js': '', 'style.css': '', 'manifest.js': '', 'README.md': '' };
 let cachedUser = null;
-
-const WORKFLOWS = {
-    static: "name: deploy_static\non: [push, workflow_dispatch]\npermissions: { contents: read, pages: write, id-token: write }\njobs:\n  deploy:\n    environment: { name: github-pages }\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/configure-pages@v5\n      - uses: actions/upload-pages-artifact@v3\n        with: { path: '.' }\n      - uses: actions/deploy-pages@v4",
-    clearout: "name: clear_out\non: [workflow_dispatch]\njobs:\n  clear:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v2\n      - run: |\n          git config user.email 'bot@pmc.internal'\n          git config user.name 'PMC-Bot'\n          git checkout --orphan temp\n          git add -A\n          git commit -m 'Clean Slate'\n          git branch -D main\n          git branch -m main\n          git push -f origin main"
-};
 
 window.onload = function() {
     document.getElementById('ENTRY_TOKEN').value = localStorage.getItem('pmc_token') || '';
     document.getElementById('ENTRY_REPO').value = localStorage.getItem('pmc_repo') || '';
-    document.getElementById('INIT_REPO_NAME').value = localStorage.getItem('pmc_init_repo') || '';
     const saved = localStorage.getItem('pmc_buffers');
     if(saved) buffers = JSON.parse(saved);
     switchBuffer('index.html');
@@ -89,7 +79,6 @@ window.onload = function() {
 function saveCreds() {
     localStorage.setItem('pmc_token', document.getElementById('ENTRY_TOKEN').value);
     localStorage.setItem('pmc_repo', document.getElementById('ENTRY_REPO').value);
-    localStorage.setItem('pmc_init_repo', document.getElementById('INIT_REPO_NAME').value);
 }
 
 function saveActiveContent() {
@@ -106,6 +95,82 @@ function switchBuffer(newPath) {
     const activeBtn = document.getElementById('tab-' + newPath);
     if(activeBtn) activeBtn.classList.add('active-tab');
     updateStagingIcons();
+}
+
+function updateStagingIcons() {
+    Object.keys(buffers).forEach(key => {
+        const el = document.getElementById('status-' + key);
+        if(el) {
+            if(buffers[key] && buffers[key].trim().length > 0) el.classList.add('staged');
+            else el.classList.remove('staged');
+        }
+    });
+}
+
+function updateLog(msg) {
+    const log = document.getElementById('UI_LOG');
+    log.innerHTML = msg + '<br>' + log.innerHTML;
+}
+
+async function getUsername(pat) {
+    if(cachedUser) return cachedUser;
+    try {
+        const r = await fetch('https://api.github.com/user', { headers: {'Authorization':'token ' + pat} });
+        if(r.ok) { const d = await r.json(); cachedUser = d.login; return cachedUser; }
+    } catch(e) { return null; }
+    return null;
+}
+
+async function executeBatchDeployment() {
+    const pat = document.getElementById('ENTRY_TOKEN').value;
+    const repo = document.getElementById('ENTRY_REPO').value;
+    const files = Object.keys(buffers).filter(k => buffers[k].trim().length > 0);
+    
+    if(!pat || !repo || files.length === 0) return alert("Check Assets/Repo/PAT.");
+    const user = await getUsername(pat);
+    if(!user) return updateLog("Auth Failed.");
+
+    updateLog("Starting deployment...");
+    for (const file of files) {
+        updateLog("Pushing: " + file);
+        const success = await pushFile(pat, user, repo, file, buffers[file]);
+        if(success) updateLog("Success: " + file);
+        else updateLog("Error: " + file);
+    }
+    updateLog("Batch Finished.");
+}
+
+async function pushFile(pat, user, repo, path, content) {
+    const url = 'https://api.github.com/repos/' + user + '/' + repo + '/contents/' + path;
+    let sha = null;
+    try {
+        const g = await fetch(url, {headers:{'Authorization':'token ' + pat}});
+        if(g.ok) { const d = await g.json(); sha = d.sha; }
+
+        const res = await fetch(url, {
+            method: 'PUT',
+            headers: {'Authorization':'token ' + pat, 'Content-Type':'application/json'},
+            body: JSON.stringify({
+                message: "PMC Update",
+                content: btoa(unescape(encodeURIComponent(content))),
+                sha: sha
+            })
+        });
+        return res.ok;
+    } catch(e) { return false; }
+}
+
+function clearCurrentBuffer() {
+    document.getElementById('MAIN_TEXT').value = '';
+    saveActiveContent();
+}
+
+function hardReset() {
+    if(confirm("Wipe local cache?")) { localStorage.clear(); location.reload(); }
+}
+</script>
+</body>
+</html>
 }
 
 function updateStagingIcons() {
