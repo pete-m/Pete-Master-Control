@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en-GB">
 <head>
-    
     <meta charset="UTF-8">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -15,9 +14,9 @@
         <header class="p-4 bg-zinc-900 border border-zinc-800 rounded-2xl flex justify-between items-center shadow-xl">
             <div>
                 <h1 id="VER_ID" class="text-xl font-black text-zinc-700 uppercase italic tracking-tighter transition-colors duration-700">PMC v0.4.0</h1>
-                <p class="text-[8px] text-zinc-600 uppercase tracking-[0.2em] font-bold mt-1">Stabilised Build</p>
+                <p class="text-[8px] text-zinc-600 uppercase tracking-[0.2em] font-bold mt-1 text-zinc-500">Stabilised Build</p>
             </div>
-            <button onclick="location.reload(true)" class="text-[9px] font-bold text-red-500 uppercase">[ Hard Reload ]</button>
+            <button onclick="location.reload(true)" class="text-[9px] font-bold text-red-500 uppercase border border-red-900/20 px-2 py-1 rounded">[ Hard Reload ]</button>
         </header>
 
         <div id="UI_LOG" class="bg-zinc-950 border border-zinc-900 rounded-xl p-2 text-[10px] font-mono text-zinc-500 text-center italic h-20 overflow-y-auto">
@@ -27,8 +26,8 @@
         <section class="p-4 bg-zinc-900 border-2 border-orange-600/20 rounded-2xl space-y-2">
             <span class="text-[9px] uppercase font-black text-orange-600 tracking-widest italic px-1">Gateway: PAT</span>
             <div class="flex gap-2">
-                <input type="password" id="ENTRY_TOKEN" placeholder="Paste PAT..." class="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-xs outline-none focus:border-orange-600 shadow-inner">
-                <button id="HANDSHAKE_BTN" class="bg-zinc-800 text-orange-500 font-black px-4 rounded-lg text-[9px] uppercase border border-zinc-700 active:bg-orange-600 active:text-white">Verify</button>
+                <input type="password" id="ENTRY_TOKEN" placeholder="Paste PAT..." class="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-xs outline-none focus:border-orange-600 shadow-inner text-orange-500 font-mono">
+                <button id="HANDSHAKE_BTN" class="bg-zinc-800 text-orange-500 font-black px-4 rounded-lg text-[9px] uppercase border border-zinc-700 active:bg-orange-600 active:text-white transition-colors">Verify</button>
             </div>
         </section>
 
@@ -39,30 +38,35 @@
             <input type="text" id="ENTRY_REPO" placeholder="Target Repository Name" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs outline-none text-blue-400 font-mono">
             
             <div class="grid grid-cols-5 gap-1">
-                <button id="tab-index.html" class="tab-btn bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase">HTML</button>
-                <button id="tab-code.js" class="tab-btn bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase">JS</button>
-                <button id="tab-style.css" class="tab-btn bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase">CSS</button>
-                <button id="tab-manifest.js" class="tab-btn bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase">Manifest</button>
-                <button id="tab-README.md" class="tab-btn bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase">MD</button>
+                <button id="tab-index.html" class="tab-btn bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase text-zinc-500">HTML</button>
+                <button id="tab-code.js" class="tab-btn bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase text-zinc-500">JS</button>
+                <button id="tab-style.css" class="tab-btn bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase text-zinc-500">CSS</button>
+                <button id="tab-manifest.js" class="tab-btn bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase text-zinc-500">Manifest</button>
+                <button id="tab-README.md" class="tab-btn bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase text-zinc-500">MD</button>
             </div>
-            <textarea id="MAIN_TEXT" class="w-full h-64 bg-zinc-900 border border-zinc-800 rounded-b-xl rounded-tr-xl p-4 text-[10px] font-mono outline-none resize-none" placeholder="Paste code here..."></textarea>
-            <button id="PUSH_TRIGGER" class="w-full bg-zinc-800 border border-zinc-700 text-zinc-400 font-bold py-3 rounded-lg uppercase text-[9px] tracking-[0.2em] mt-2 active:bg-orange-600 active:text-white">Commission Batch</button>
+            <textarea id="MAIN_TEXT" class="w-full h-64 bg-zinc-900 border border-zinc-800 rounded-b-xl rounded-tr-xl p-4 text-[10px] font-mono outline-none resize-none shadow-inner" placeholder="Paste code here..."></textarea>
+            <button id="PUSH_TRIGGER" class="w-full bg-zinc-800 border border-zinc-700 text-zinc-400 font-bold py-3 rounded-lg uppercase text-[9px] tracking-[0.2em] mt-2 active:bg-orange-600 active:text-white transition-colors">Commission Batch</button>
         </section>
     </div>
 
     <script>
-        // Separate, clean loader to prevent White Screen
         window.addEventListener('load', () => {
-            fetch('./code.js?t=' + Date.now())
-                .then(r => r.text())
+            const log = document.getElementById('UI_LOG');
+            const timestamp = Date.now();
+            
+            fetch('./code.js?t=' + timestamp)
+                .then(r => {
+                    if (!r.ok) throw new Error("HTTP " + r.status);
+                    return r.text();
+                })
                 .then(code => {
                     const s = document.createElement('script');
                     s.textContent = code;
                     document.body.appendChild(s);
+                    console.log("PMC Logic Streamed Successfully.");
                 })
                 .catch(e => {
-                    const log = document.getElementById('UI_LOG');
-                    if(log) log.innerText = "[Error] Script failed to stream: " + e.message;
+                    log.innerHTML = `<span class="text-red-500 font-bold">[Critical] Stream Failed: ${e.message}</span>`;
                 });
         });
     </script>
