@@ -1,25 +1,29 @@
+/* PROJECT: PMC (Phase 2)
+  VERSION: v0.3.0
+  AUTHOR: Peter Maben with Gemini
+  LOGIC: Batch Commissioning Engine
+*/
 (function() {
+    const VER = "v0.3.0";
     let currentPath = 'index.html';
     let buffers = { 'index.html': '', 'code.js': '', 'style.css': '', 'manifest.js': '', 'README.md': '' };
-    let cachedUser = null;
 
     const log = (msg) => {
         const el = document.getElementById('UI_LOG');
         if (el) el.innerHTML = `<span class="block border-b border-zinc-900 py-1">${msg}</span>` + el.innerHTML;
     };
 
-    const WORKFLOWS = {
-        static: "name: deploy_static\non: [push, workflow_dispatch]\npermissions: { contents: read, pages: write, id-token: write }\njobs:\n  deploy:\n    environment: { name: github-pages }\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/configure-pages@v5\n      - uses: actions/upload-pages-artifact@v3\n        with: { path: '.' }\n      - uses: actions/deploy-pages@v4"
-    };
-
     function ignite() {
-        const initBtn = document.getElementById('INIT_BTN');
-        if (!initBtn) {
-            setTimeout(ignite, 100);
-            return;
-        }
+        const h = document.getElementById('VER_ID');
+        if (!h) { setTimeout(ignite, 50); return; }
 
-        initBtn.onclick = batchInit;
+        // Heartbeat visual: turn header orange to prove script is running
+        h.classList.replace('text-zinc-700', 'text-orange-600');
+        
+        log(`<b class="text-white uppercase tracking-widest text-[9px]">Handshake: Logic ${VER} Engaged</b>`);
+
+        // Attach Listeners
+        document.getElementById('INIT_BTN').onclick = batchInit;
         document.getElementById('PUSH_TRIGGER').onclick = executeBatchDeployment;
         document.getElementById('CLEAR_BTN').onclick = clearCurrentBuffer;
         document.getElementById('MAIN_TEXT').oninput = saveActiveContent;
@@ -28,6 +32,7 @@
             btn.onclick = () => switchBuffer(btn.id.replace('tab-', ''));
         });
 
+        // Restore State
         document.getElementById('ENTRY_TOKEN').value = localStorage.getItem('pmc_token') || '';
         document.getElementById('ENTRY_REPO').value = localStorage.getItem('pmc_repo') || '';
         document.getElementById('INIT_REPO_NAME').value = localStorage.getItem('pmc_init_repo') || '';
@@ -36,7 +41,6 @@
         if (saved) { try { buffers = JSON.parse(saved); } catch(e) {} }
         
         switchBuffer('index.html');
-        log("<b class='text-orange-500'>[SYSTEM] Architecture Locked. Ready.</b>");
     }
 
     async function batchInit() {
@@ -44,8 +48,9 @@
         const names = document.getElementById('INIT_REPO_NAME').value.split(',').map(n => n.trim()).filter(n => n);
         if(!pat || !names.length) return alert("Credentials/Names missing.");
         
-        const user = await getUsername(pat);
-        if(!user) return log("❌ Auth failed. Check PAT.");
+        const r = await fetch('https://api.github.com/user', { headers: {'Authorization':'token ' + pat} });
+        if(!r.ok) return log("❌ Auth failed.");
+        const user = (await r.json()).login;
 
         log(`🚀 Initialising ${names.length} project(s)...`);
 
@@ -58,13 +63,12 @@
             });
 
             if(res.ok) {
-                log(`✅ Repo Created. Injecting CI/CD Workflow...`);
-                const wfOk = await pushFile(pat, user, name, '.github/workflows/static.yml', WORKFLOWS.static);
-                if(wfOk) log(`✨ <b>${name}</b> is LIVE and Pages-ready.`);
-                else log(`⚠️ Repo created, but Workflow failed.`);
+                log(`✅ Repo Created. Injecting Workflow...`);
+                const staticWF = "name: deploy_static\non: [push, workflow_dispatch]\npermissions: { contents: read, pages: write, id-token: write }\njobs:\n  deploy:\n    environment: { name: github-pages }\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/configure-pages@v5\n      - uses: actions/upload-pages-artifact@v3\n        with: { path: '.' }\n      - uses: actions/deploy-pages@v4";
+                await pushFile(pat, user, name, '.github/workflows/static.yml', staticWF);
+                log(`✨ <b>${name}</b> is LIVE.`);
             } else {
-                const err = await res.json();
-                log(`❌ Failed: ${err.message}`);
+                log(`❌ Failed: Repo might already exist.`);
             }
         }
     }
@@ -72,7 +76,8 @@
     async function executeBatchDeployment() {
         const pat = document.getElementById('ENTRY_TOKEN').value;
         const repo = document.getElementById('ENTRY_REPO').value;
-        const user = await getUsername(pat);
+        const r = await fetch('https://api.github.com/user', { headers: {'Authorization':'token ' + pat} });
+        const user = (await r.json()).login;
         const files = Object.keys(buffers).filter(k => buffers[k].trim().length > 0);
         
         log(`📡 Transferring Assets to <b>${repo}</b>...`);
@@ -92,7 +97,7 @@
             const res = await fetch(url, {
                 method: 'PUT',
                 headers: {'Authorization':'token ' + pat, 'Content-Type':'application/json'},
-                body: JSON.stringify({ message: "PMC Sync", content: btoa(unescape(encodeURIComponent(content))), sha: sha })
+                body: JSON.stringify({ message: `PMC ${VER} Sync`, content: btoa(unescape(encodeURIComponent(content))), sha: sha })
             });
             return res.ok;
         } catch(e) { return false; }
@@ -127,90 +132,10 @@
         });
     }
 
-    async function getUsername(pat) {
-        if(cachedUser) return cachedUser;
-        const r = await fetch('https://api.github.com/user', { headers: {'Authorization':'token ' + pat} });
-        if(r.ok) { const d = await r.json(); cachedUser = d.login; return d.login; }
-        return null;
-    }
-
-    function clearCurrentBuffer() {
-        document.getElementById('MAIN_TEXT').value = '';
-        saveActiveContent();
-    }
-
     ignite();
 })();
 
 function hardReset() {
     if(confirm("Wipe local cache?")) { localStorage.clear(); location.reload(); }
-}
-
-    function saveActiveContent() {
-        buffers[currentPath] = document.getElementById('MAIN_TEXT').value;
-        localStorage.setItem('pmc_buffers', JSON.stringify(buffers));
-        updateStagingIcons();
-        localStorage.setItem('pmc_token', document.getElementById('ENTRY_TOKEN').value);
-        localStorage.setItem('pmc_repo', document.getElementById('ENTRY_REPO').value);
-        localStorage.setItem('pmc_init_repo', document.getElementById('INIT_REPO_NAME').value);
-    }
-
-    function updateStagingIcons() {
-        Object.keys(buffers).forEach(key => {
-            const el = document.getElementById('status-' + key);
-            if(el) {
-                if(buffers[key]?.trim().length > 0) el.classList.add('staged');
-                else el.classList.remove('staged');
-            }
-        });
-    }
-
-    async function getUsername(pat) {
-        if(cachedUser) return cachedUser;
-        const r = await fetch('https://api.github.com/user', { headers: {'Authorization':'token ' + pat} });
-        if(r.ok) { const d = await r.json(); cachedUser = d.login; return d.login; }
-        return null;
-    }
-
-    function clearCurrentBuffer() {
-        document.getElementById('MAIN_TEXT').value = '';
-        saveActiveContent();
-    }
-
-    ignite();
-})();
-
-function hardReset() {
-    if(confirm("Wipe local cache?")) { localStorage.clear(); location.reload(); }
-                }
-                    }
-
-    function updateStagingIcons() {
-        Object.keys(buffers).forEach(key => {
-            const el = document.getElementById('status-' + key);
-            if(el) {
-                if(buffers[key]?.trim().length > 0) el.classList.add('staged');
-                else el.classList.remove('staged');
-            }
-        });
-    }
-
-    async function getUsername(pat) {
-        if(cachedUser) return cachedUser;
-        const r = await fetch('https://api.github.com/user', { headers: {'Authorization':'token ' + pat} });
-        if(r.ok) { const d = await r.json(); cachedUser = d.login; return d.login; }
-        return null;
-    }
-
-    function clearCurrentBuffer() {
-        document.getElementById('MAIN_TEXT').value = '';
-        saveActiveContent();
-    }
-
-    // Start the search for elements
-    ignite();
-})();
-
-function hardReset() {
-    if(confirm("Wipe local cache?")) { localStorage.clear(); location.reload(); }
-}
+                                      }
+            
