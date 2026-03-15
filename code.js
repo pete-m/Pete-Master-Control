@@ -15,12 +15,18 @@
         if (el) el.innerHTML = `<div class="border-b border-zinc-900 py-1 font-mono text-[9px] uppercase tracking-tighter text-emerald-500">${m}</div>` + el.innerHTML;
     };
 
-    const run = () => {
-        log("ENGINE WARM. GATEWAY READY.");
-
-        // Handshake
+    const attachLogic = () => {
         const handshakeBtn = document.getElementById('HANDSHAKE_BTN');
-        if (handshakeBtn) handshakeBtn.onclick = async () => {
+        const initBtn = document.getElementById('INIT_BTN');
+        const pushBtn = document.getElementById('PUSH_TRIGGER');
+
+        // Check if elements exist before proceeding
+        if (!handshakeBtn || !initBtn || !pushBtn) return false;
+
+        log("ENGINE WARM. BUTTONS HOOKED.");
+
+        // Phase 0: Handshake
+        handshakeBtn.onclick = async () => {
             const pat = document.getElementById('ENTRY_TOKEN').value.trim();
             log("📡 Verifying...");
             try {
@@ -38,9 +44,8 @@
             } catch (e) { log("❌ Connection Refused"); }
         };
 
-        // Navigator (Restored Bare Repo Logic)
-        const initBtn = document.getElementById('INIT_BTN');
-        if (initBtn) initBtn.onclick = async () => {
+        // Phase 1: Navigator (Bare Repo Support)
+        initBtn.onclick = async () => {
             const repoName = document.getElementById('INIT_REPO_NAME').value.trim();
             log(`[Navigator] Creating ${repoName}...`);
             try {
@@ -51,13 +56,12 @@
                 });
                 if (r.ok) {
                     log(`✅ Repo Ready.`);
-                    // Display bare name as desired
                     document.getElementById('ENTRY_REPO').value = repoName;
                 } else { log(`❌ Failed: ${r.status}`); }
             } catch (e) { log("❌ Error"); }
         };
 
-        // Tabs
+        // Phase 2: Tabs
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.onclick = () => {
                 buffer[activeTab] = document.getElementById('MAIN_TEXT').value;
@@ -69,9 +73,8 @@
             };
         });
 
-        // Commission (Restored Bare Name Support)
-        const pushBtn = document.getElementById('PUSH_TRIGGER');
-        if (pushBtn) pushBtn.onclick = async () => {
+        // Phase 2: Commission (Bare Repo Name Detection)
+        pushBtn.onclick = async () => {
             const repoInput = document.getElementById('ENTRY_REPO').value.trim();
             const content = document.getElementById('MAIN_TEXT').value;
             
@@ -102,10 +105,18 @@
                 }
             } catch (e) { log(`❌ Error: ${e.message}`); }
         };
+
+        return true;
     };
 
-    // Force execution check
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
+    // Retry loop to ensure buttons are hooked even if script loads fast
+    const retryHook = setInterval(() => {
+        if (attachLogic()) {
+            clearInterval(retryHook);
+        }
+    }, 100);
+
+})();
     else run();
 })();
 
