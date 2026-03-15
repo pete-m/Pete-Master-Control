@@ -61,34 +61,3 @@
     <script src="./code.js?v=0.4.1"></script>
 </body>
 </html>
-
-            // Push Batch
-            document.getElementById('PUSH_TRIGGER').onclick = async () => {
-                const repo = document.getElementById('ENTRY_REPO').value.trim();
-                const content = document.getElementById('MAIN_TEXT').value;
-                if (!repo || !content || !sessionPat) return log("⚠️ Lock: Data Missing");
-
-                const path = repo.includes('/') ? repo : `${userLogin}/${repo}`;
-                log(`[Batch] Checking ${activeTab}...`);
-                try {
-                    const res = await fetch(`https://api.github.com/repos/${path}/contents/${activeTab}`, {
-                        headers: { 'Authorization': `token ${sessionPat}` }
-                    });
-                    const sha = res.ok ? (await res.json()).sha : null;
-                    const push = await fetch(`https://api.github.com/repos/${path}/contents/${activeTab}`, {
-                        method: 'PUT',
-                        headers: { 'Authorization': `token ${sessionPat}`, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            message: `PMC Update: ${activeTab}`,
-                            content: btoa(unescape(encodeURIComponent(content))),
-                            sha: sha
-                        })
-                    });
-                    if (push.ok) log(`<span class="text-emerald-500">✨ ${activeTab} Commissioned.</span>`);
-                    else log("❌ Push Failed");
-                } catch (e) { log(`❌ Error: ${e.message}`); }
-            };
-        })();
-    </script>
-</body>
-</html>
