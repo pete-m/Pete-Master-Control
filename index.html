@@ -3,27 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>PMC v0.2.1</title>
+<title>PMC v0.2.2</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<style>
-    .active-tab { border-bottom: 3px solid #ea580c !important; color: #ea580c !important; background: #18181b !important; }
-    .staged { color: #ea580c !important; opacity: 1 !important; }
-    textarea { scrollbar-width: thin; scrollbar-color: #3f3f46 transparent; }
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-zinc-950 text-zinc-300 p-4 font-sans min-h-screen">
-
 <div class="max-w-md mx-auto space-y-3 pb-10">
     <header class="p-4 bg-zinc-900 border border-zinc-800 rounded-2xl flex justify-between items-center shadow-xl">
         <div>
-            <h1 class="text-xl font-black text-orange-600 uppercase italic tracking-tighter leading-none">PMC v0.2.1</h1>
-            <p id="AUTH_STAT" class="text-[8px] text-zinc-600 uppercase tracking-[0.2em] font-bold mt-1">Manifest Asset Live</p>
+            <h1 class="text-xl font-black text-orange-600 uppercase italic tracking-tighter leading-none">PMC v0.2.2</h1>
+            <p class="text-[8px] text-zinc-600 uppercase tracking-[0.2em] font-bold mt-1">Modular Framework</p>
         </div>
         <button onclick="hardReset()" class="text-[9px] font-bold text-red-500/40 uppercase hover:text-red-500">[ Wipe Cache ]</button>
     </header>
 
-    <div id="UI_LOG" class="bg-zinc-950 border border-zinc-900 rounded-xl p-2 text-[10px] font-mono text-zinc-500 text-center italic shadow-inner h-16 overflow-y-auto">
-        System Ready.
+    <div id="UI_LOG" class="bg-zinc-950 border border-zinc-900 rounded-xl p-2 text-[10px] font-mono text-zinc-500 text-center italic shadow-inner h-20 overflow-y-auto">
+        System Modularised.
     </div>
 
     <section class="p-4 bg-zinc-900 border-2 border-orange-600/20 rounded-2xl space-y-2 shadow-2xl">
@@ -46,215 +41,31 @@
         </div>
 
         <div class="relative">
-            <textarea id="MAIN_TEXT" oninput="saveActiveContent()" class="w-full h-48 bg-zinc-900 border border-zinc-800 rounded-b-xl rounded-tr-xl p-4 text-[10px] font-mono focus:border-orange-600 outline-none shadow-inner leading-relaxed resize-none" placeholder="Paste code here..."></textarea>
+            <textarea id="MAIN_TEXT" oninput="saveActiveContent()" class="w-full h-64 bg-zinc-900 gborder border-zinc-800 rounded-b-xl rounded-tr-xl p-4 text-[10px] font-mono focus:border-orange-600 outline-none shadow-inner leading-relaxed resize-none" placeholder="Paste code here..."></textarea>
             <button onclick="clearCurrentBuffer()" class="absolute bottom-2 right-2 text-red-500/30 hover:text-red-500 text-[8px] font-bold uppercase tracking-tighter">[ Clear ]</button>
         </div>
 
         <div class="p-3 bg-zinc-900 border border-zinc-800 rounded-xl space-y-3 shadow-xl">
             <div id="STAGING_BAR" class="flex flex-wrap justify-center gap-2">
-                <div id="status-index.html" class="border border-dashed border-zinc-800 px-2 py-0.5 rounded text-[7px] font-bold opacity-30 tracking-tighter">HTML</div>
-                <div id="status-code.js" class="border border-dashed border-zinc-800 px-2 py-0.5 rounded text-[7px] font-bold opacity-30 tracking-tighter">JS</div>
-                <div id="status-style.css" class="border border-dashed border-zinc-800 px-2 py-0.5 rounded text-[7px] font-bold opacity-30 tracking-tighter">CSS</div>
-                <div id="status-manifest.js" class="border border-dashed border-zinc-800 px-2 py-0.5 rounded text-[7px] font-bold opacity-30 tracking-tighter">MANIFEST</div>
-                <div id="status-README.md" class="border border-dashed border-zinc-800 px-2 py-0.5 rounded text-[7px] font-bold opacity-30 tracking-tighter">MD</div>
+                <div id="status-index.html" class="status-box">HTML</div>
+                <div id="status-code.js" class="status-box">JS</div>
+                <div id="status-style.css" class="status-box">CSS</div>
+                <div id="status-manifest.js" class="status-box">MANIFEST</div>
+                <div id="status-README.md" class="status-box">MD</div>
             </div>
             <button id="PUSH_TRIGGER" onclick="executeBatchDeployment()" class="w-full bg-zinc-800 border border-zinc-700 text-zinc-400 font-bold py-3 rounded-lg uppercase text-[9px] tracking-[0.2em] transition-all hover:bg-zinc-700 hover:text-white">Commission Batch</button>
         </div>
     </section>
 </div>
-
-<script>
-let currentPath = 'index.html';
-let buffers = { 'index.html': '', 'code.js': '', 'style.css': '', 'manifest.js': '', 'README.md': '' };
-let cachedUser = null;
-
-window.onload = function() {
-    document.getElementById('ENTRY_TOKEN').value = localStorage.getItem('pmc_token') || '';
-    document.getElementById('ENTRY_REPO').value = localStorage.getItem('pmc_repo') || '';
-    const saved = localStorage.getItem('pmc_buffers');
-    if(saved) buffers = JSON.parse(saved);
-    switchBuffer('index.html');
-};
-
-function saveCreds() {
-    localStorage.setItem('pmc_token', document.getElementById('ENTRY_TOKEN').value);
-    localStorage.setItem('pmc_repo', document.getElementById('ENTRY_REPO').value);
-}
-
-function saveActiveContent() {
-    buffers[currentPath] = document.getElementById('MAIN_TEXT').value;
-    localStorage.setItem('pmc_buffers', JSON.stringify(buffers));
-    updateStagingIcons();
-}
-
-function switchBuffer(newPath) {
-    buffers[currentPath] = document.getElementById('MAIN_TEXT').value;
-    currentPath = newPath;
-    document.getElementById('MAIN_TEXT').value = buffers[newPath] || '';
-    document.querySelectorAll('[id^="tab-"]').forEach(btn => btn.classList.remove('active-tab'));
-    const activeBtn = document.getElementById('tab-' + newPath);
-    if(activeBtn) activeBtn.classList.add('active-tab');
-    updateStagingIcons();
-}
-
-function updateStagingIcons() {
-    Object.keys(buffers).forEach(key => {
-        const el = document.getElementById('status-' + key);
-        if(el) {
-            if(buffers[key] && buffers[key].trim().length > 0) el.classList.add('staged');
-            else el.classList.remove('staged');
-        }
-    });
-}
-
-function updateLog(msg) {
-    const log = document.getElementById('UI_LOG');
-    log.innerHTML = msg + '<br>' + log.innerHTML;
-}
-
-async function getUsername(pat) {
-    if(cachedUser) return cachedUser;
-    try {
-        const r = await fetch('https://api.github.com/user', { headers: {'Authorization':'token ' + pat} });
-        if(r.ok) { const d = await r.json(); cachedUser = d.login; return cachedUser; }
-    } catch(e) { return null; }
-    return null;
-}
-
-async function executeBatchDeployment() {
-    const pat = document.getElementById('ENTRY_TOKEN').value;
-    const repo = document.getElementById('ENTRY_REPO').value;
-    const files = Object.keys(buffers).filter(k => buffers[k].trim().length > 0);
-    
-    if(!pat || !repo || files.length === 0) return alert("Check Assets/Repo/PAT.");
-    const user = await getUsername(pat);
-    if(!user) return updateLog("Auth Failed.");
-
-    updateLog("Starting deployment...");
-    for (const file of files) {
-        updateLog("Pushing: " + file);
-        const success = await pushFile(pat, user, repo, file, buffers[file]);
-        if(success) updateLog("Success: " + file);
-        else updateLog("Error: " + file);
-    }
-    updateLog("Batch Finished.");
-}
-
-async function pushFile(pat, user, repo, path, content) {
-    const url = 'https://api.github.com/repos/' + user + '/' + repo + '/contents/' + path;
-    let sha = null;
-    try {
-        const g = await fetch(url, {headers:{'Authorization':'token ' + pat}});
-        if(g.ok) { const d = await g.json(); sha = d.sha; }
-
-        const res = await fetch(url, {
-            method: 'PUT',
-            headers: {'Authorization':'token ' + pat, 'Content-Type':'application/json'},
-            body: JSON.stringify({
-                message: "PMC Update",
-                content: btoa(unescape(encodeURIComponent(content))),
-                sha: sha
-            })
-        });
-        return res.ok;
-    } catch(e) { return false; }
-}
-
-function clearCurrentBuffer() {
-    document.getElementById('MAIN_TEXT').value = '';
-    saveActiveContent();
-}
-
-function hardReset() {
-    if(confirm("Wipe local cache?")) { localStorage.clear(); location.reload(); }
-}
+<script src="code.js"></script>
+</body>
+</html>
+                    
+</script>
+</body>
+</html>
 </script>
 </body>
 </html>
 }
 
-function updateStagingIcons() {
-    Object.keys(buffers).forEach(key => {
-        const el = document.getElementById('status-' + key);
-        if(el) {
-            if(buffers[key] && buffers[key].trim().length > 0) el.classList.add('staged');
-            else el.classList.remove('staged');
-        }
-    });
-}
-
-function updateLog(msg) { document.getElementById('UI_LOG').innerText = msg; }
-
-async function getUsername(pat) {
-    if(cachedUser) return cachedUser;
-    try {
-        const r = await fetch('https://api.github.com/user', { headers: {'Authorization':'token ' + pat} });
-        if(r.ok) { const d = await r.json(); cachedUser = d.login; return cachedUser; }
-    } catch(e) { return null; }
-    return null;
-}
-
-async function batchInit() {
-    const pat = document.getElementById('ENTRY_TOKEN').value;
-    const rawNames = document.getElementById('INIT_REPO_NAME').value;
-    if(!pat || !rawNames) return alert("Credentials required.");
-    const user = await getUsername(pat);
-    if(!user) return updateLog("Auth Failed.");
-
-    const names = rawNames.split(',').map(n => n.trim()).filter(n => n.length > 0);
-    for(let name of names) {
-        updateLog("Creating: " + name);
-        const res = await fetch('https://api.github.com/user/repos', {
-            method: 'POST',
-            headers: {'Authorization': 'token ' + pat, 'Content-Type': 'application/json'},
-            body: JSON.stringify({ name: name, auto_init: true })
-        });
-        if(res.ok) {
-            await pushFile(pat, user, name, '.github/workflows/static.yml', WORKFLOWS.static);
-            await pushFile(pat, user, name, '.github/workflows/clear_out.yml', WORKFLOWS.clearout);
-        }
-    }
-    updateLog("Batch Done.");
-}
-
-async function executeBatchDeployment() {
-    const pat = document.getElementById('ENTRY_TOKEN').value;
-    const repo = document.getElementById('ENTRY_REPO').value;
-    const files = Object.keys(buffers).filter(k => buffers[k].trim().length > 0);
-    if(!pat || !repo || files.length === 0) return alert("Check Assets/Repo/PAT.");
-    const user = await getUsername(pat);
-    if(!user) return updateLog("Auth Failed.");
-
-    updateLog("Pushing to " + user + "/" + repo);
-    for (const file of files) { await pushFile(pat, user, repo, file, buffers[file]); }
-    updateLog("Commissioned.");
-}
-
-async function pushFile(pat, user, repo, path, content) {
-    const url = 'https://api.github.com/repos/' + user + '/' + repo + '/contents/' + path;
-    let sha = null;
-    const g = await fetch(url, {headers:{'Authorization':'token ' + pat}});
-    if(g.ok) { const d = await g.json(); sha = d.sha; }
-
-    return fetch(url, {
-        method: 'PUT',
-        headers: {'Authorization':'token ' + pat, 'Content-Type':'application/json'},
-        body: JSON.stringify({
-            message: "PMC Update",
-            content: btoa(unescape(encodeURIComponent(content))),
-            sha: sha
-        })
-    });
-}
-
-function clearCurrentBuffer() {
-    document.getElementById('MAIN_TEXT').value = '';
-    saveActiveContent();
-}
-
-function hardReset() {
-    if(confirm("Wipe local cache?")) { localStorage.clear(); location.reload(); }
-}
-</script>
-</body>
-</html>
