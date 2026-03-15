@@ -4,19 +4,23 @@
     <meta charset="UTF-8">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PMC v0.3.7</title>
+    <title>PMC v0.3.9</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="style.css">
-    <script>window.PMC_VER = "v0.3.7";</script>
+    <style>
+        .status-box { font-size: 7px; font-weight: 900; padding: 4px 8px; border: 1px solid #27272a; border-radius: 4px; color: #3f3f46; text-transform: uppercase; }
+        .tab-btn { transition: all 0.2s; }
+    </script>
+    <script>window.PMC_VER = "v0.3.9";</script>
 </head>
 <body class="bg-zinc-950 text-zinc-300 p-4 font-sans min-h-screen">
     <div class="max-w-md mx-auto space-y-3 pb-10">
+        
         <header class="p-4 bg-zinc-900 border border-zinc-800 rounded-2xl flex justify-between items-center shadow-xl">
             <div>
-                <h1 id="VER_ID" class="text-xl font-black text-zinc-700 uppercase italic tracking-tighter">PMC v0.3.7</h1>
-                <p class="text-[8px] text-zinc-600 uppercase tracking-[0.2em] font-bold mt-1">Force Handshake Build</p>
+                <h1 id="VER_ID" class="text-xl font-black text-zinc-700 uppercase italic tracking-tighter transition-colors duration-700">PMC v0.3.9</h1>
+                <p class="text-[8px] text-zinc-600 uppercase tracking-[0.2em] font-bold mt-1">Dual-Log Handshake Build</p>
             </div>
-            <button onclick="location.reload(true)" class="text-[9px] font-bold text-red-500 uppercase hover:text-red-400">[ Hard Reload ]</button>
+            <button onclick="location.reload(true)" class="text-[9px] font-bold text-red-500 uppercase">[ Hard Reload ]</button>
         </header>
 
         <div id="UI_LOG" class="bg-zinc-950 border border-zinc-900 rounded-xl p-2 text-[10px] font-mono text-zinc-500 text-center italic h-20 overflow-y-auto">
@@ -26,8 +30,12 @@
         <section class="p-4 bg-zinc-900 border-2 border-orange-600/20 rounded-2xl space-y-2">
             <span class="text-[9px] uppercase font-black text-orange-600 tracking-widest italic px-1">Gateway: PAT</span>
             <div class="flex gap-2">
-                <input type="password" id="ENTRY_TOKEN" placeholder="Paste PAT..." class="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-xs outline-none focus:border-orange-600">
-                <button id="HANDSHAKE_BTN" class="bg-zinc-800 text-orange-500 font-black px-4 rounded-lg text-[9px] uppercase border border-zinc-700 active:bg-orange-600 active:text-white">Verify</button>
+                <input type="password" id="ENTRY_TOKEN" placeholder="Paste PAT..." class="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-xs outline-none focus:border-orange-600 shadow-inner">
+                <button id="HANDSHAKE_BTN" 
+                        onclick="const l=document.getElementById('UI_LOG'); l.innerHTML='<div class=\'text-blue-400\'>[Index] Handshake Attempted...</div>'+l.innerHTML;"
+                        class="bg-zinc-800 text-orange-500 font-black px-4 rounded-lg text-[9px] uppercase border border-zinc-700 active:bg-orange-600 active:text-white">
+                    Verify
+                </button>
             </div>
         </section>
 
@@ -71,4 +79,5 @@
             });
     </script>
 </body>
-</html>
+    </html>
+        
