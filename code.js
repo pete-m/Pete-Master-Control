@@ -1,6 +1,6 @@
 /* PROJECT: PMC (Phase 2)
    AUTHOR: Peter Maben with Gemini
-   VERSION: v0.4.1
+   VERSION: v0.4.2
    STATUS: Stabilised Fitter Build
 */
 
@@ -12,39 +12,36 @@
 
     const log = (m) => {
         const el = document.getElementById('UI_LOG');
-        if (el) el.innerHTML = `<div class="border-b border-zinc-900 py-1 font-mono text-[9px] uppercase tracking-tighter">${m}</div>` + el.innerHTML;
+        if (el) el.innerHTML = `<div class="border-b border-zinc-900 py-1 font-mono text-[9px] uppercase tracking-tighter text-emerald-500">${m}</div>` + el.innerHTML;
     };
 
-    const init = () => {
-        log("<span class='text-emerald-500'>[System] Engine Warm. Gateway Ready.</span>");
+    const run = () => {
+        log("ENGINE WARM. GATEWAY READY.");
 
-        // PHASE 0: GATEWAY HANDSHAKE
-        document.getElementById('HANDSHAKE_BTN').onclick = async () => {
+        // Handshake
+        const handshakeBtn = document.getElementById('HANDSHAKE_BTN');
+        if (handshakeBtn) handshakeBtn.onclick = async () => {
             const pat = document.getElementById('ENTRY_TOKEN').value.trim();
-            if (!pat) return log("❌ Error: PAT Empty");
-
-            log("📡 Querying Gateway...");
+            log("📡 Verifying...");
             try {
                 const r = await fetch('https://api.github.com/user', { headers: { 'Authorization': `token ${pat}` } });
                 if (r.ok) {
                     const d = await r.json();
-                    sessionPat = pat;
-                    userLogin = d.login;
-                    log(`<span class="text-emerald-400">✅ Handshake Verified: ${d.login}</span>`);
+                    sessionPat = pat; userLogin = d.login;
+                    log(`✅ Verified: ${d.login}`);
                     document.getElementById('VER_ID').style.color = "#10b981";
                     ['PHASE_1_UI', 'PHASE_2_UI'].forEach(id => {
                         const el = document.getElementById(id);
-                        el.style.opacity = "1";
-                        el.style.pointerEvents = "auto";
+                        if (el) { el.style.opacity = "1"; el.style.pointerEvents = "auto"; }
                     });
-                } else { log(`❌ Gateway Denied: ${r.status}`); }
+                } else { log(`❌ Denied: ${r.status}`); }
             } catch (e) { log("❌ Connection Refused"); }
         };
 
-        // PHASE 1: NAVIGATOR (INIT)
-        document.getElementById('INIT_BTN').onclick = async () => {
+        // Navigator (Restored Bare Repo Logic)
+        const initBtn = document.getElementById('INIT_BTN');
+        if (initBtn) initBtn.onclick = async () => {
             const repoName = document.getElementById('INIT_REPO_NAME').value.trim();
-            if (!repoName) return log("❌ Name Required");
             log(`[Navigator] Creating ${repoName}...`);
             try {
                 const r = await fetch('https://api.github.com/user/repos', {
@@ -53,59 +50,64 @@
                     body: JSON.stringify({ name: repoName, auto_init: true })
                 });
                 if (r.ok) {
-                    log(`✅ Repo Created. Routing to Fitter...`);
-                    document.getElementById('ENTRY_REPO').value = `${userLogin}/${repoName}`;
-                } else { log(`❌ Init Failed: ${r.status}`); }
-            } catch (e) { log("❌ Init Error"); }
+                    log(`✅ Repo Ready.`);
+                    // Display bare name as desired
+                    document.getElementById('ENTRY_REPO').value = repoName;
+                } else { log(`❌ Failed: ${r.status}`); }
+            } catch (e) { log("❌ Error"); }
         };
 
-        // PHASE 2: TAB BUFFERING
+        // Tabs
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.onclick = () => {
-                const area = document.getElementById('MAIN_TEXT');
-                buffer[activeTab] = area.value;
-                document.querySelectorAll('.tab-btn').forEach(b => {
-                    b.style.borderColor = "#27272a";
-                    b.style.color = "#52525b";
-                });
-                btn.style.borderColor = "#ea580c";
-                btn.style.color = "#ea580c";
+                buffer[activeTab] = document.getElementById('MAIN_TEXT').value;
+                document.querySelectorAll('.tab-btn').forEach(b => { b.style.borderColor = "#27272a"; b.style.color = "#52525b"; });
+                btn.style.borderColor = "#ea580c"; btn.style.color = "#ea580c";
                 activeTab = btn.id.replace('tab-', '');
-                area.value = buffer[activeTab];
-                log(`[Fitter] Focus: ${activeTab}`);
+                document.getElementById('MAIN_TEXT').value = buffer[activeTab];
+                log(`Focus: ${activeTab}`);
             };
         });
 
-        // PHASE 2: COMMISSION (PUSH)
-        document.getElementById('PUSH_TRIGGER').onclick = async () => {
-            const repo = document.getElementById('ENTRY_REPO').value.trim();
+        // Commission (Restored Bare Name Support)
+        const pushBtn = document.getElementById('PUSH_TRIGGER');
+        if (pushBtn) pushBtn.onclick = async () => {
+            const repoInput = document.getElementById('ENTRY_REPO').value.trim();
             const content = document.getElementById('MAIN_TEXT').value;
-            if (!repo || !content || !sessionPat) return log("⚠️ Lock: Data Missing");
-
-            const fullPath = repo.includes('/') ? repo : `${userLogin}/${repo}`;
-            log(`[Batch] Commissioning ${activeTab}...`);
+            
+            if (!repoInput || !content || !sessionPat) return log("⚠️ Data Missing");
+            
+            // Logic: If no '/', prepend userLogin automatically
+            const path = repoInput.includes('/') ? repoInput : `${userLogin}/${repoInput}`;
+            
+            log(`🚀 Commissioning ${activeTab} to ${path}...`);
             try {
-                const res = await fetch(`https://api.github.com/repos/${fullPath}/contents/${activeTab}`, {
+                const res = await fetch(`https://api.github.com/repos/${path}/contents/${activeTab}`, {
                     headers: { 'Authorization': `token ${sessionPat}` }
                 });
                 const sha = res.ok ? (await res.json()).sha : null;
-                const push = await fetch(`https://api.github.com/repos/${fullPath}/contents/${activeTab}`, {
+                const push = await fetch(`https://api.github.com/repos/${path}/contents/${activeTab}`, {
                     method: 'PUT',
                     headers: { 'Authorization': `token ${sessionPat}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        message: `PMC Commission: ${activeTab}`,
+                        message: `PMC: ${activeTab}`,
                         content: btoa(unescape(encodeURIComponent(content))),
                         sha: sha
                     })
                 });
-                if (push.ok) log(`<span class="text-emerald-500">✨ ${activeTab} Commissioned in ${repo}</span>`);
+                if (push.ok) log(`✨ ${activeTab} STABILISED.`);
                 else {
-                    const errData = await push.json();
-                    log(`❌ Push Failed: ${errData.message}`);
+                    const err = await push.json();
+                    log(`❌ Push Failed: ${err.message}`);
                 }
             } catch (e) { log(`❌ Error: ${e.message}`); }
         };
     };
+
+    // Force execution check
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
+    else run();
+})();
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
