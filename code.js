@@ -1,11 +1,11 @@
 /* PROJECT: PMC (Phase 2)
    VERSION: v0.4.0 (Stabilised Build)
-   LOGIC: Buffered Fitter & SHA-Validated Push
+   LOGIC: Hardened Split-File Orchestrator
 */
 
 (function() {
-    // Persistent memory for the Fitter session
-    const fitterBuffer = {
+    // Internal Buffer to prevent data loss on tab switch
+    const buffer = {
         'index.html': '',
         'code.js': '',
         'style.css': '',
@@ -14,6 +14,7 @@
     };
     
     let activeTab = 'index.html';
+    let sessionPat = '';
 
     const log = (msg) => {
         const el = document.getElementById('UI_LOG');
@@ -22,90 +23,102 @@
         }
     };
 
-    document.addEventListener('click', async function (e) {
-        const target = e.target.closest('button');
-        if (!target) return;
+    // Initialize Logic once DOM is fully "awake"
+    const init = () => {
+        log("<span class='text-blue-400'>[System] Logic Streamed. Awaiting PAT...</span>");
 
-        // --- 1. THE EMERALD HANDSHAKE ---
-        if (target.id === 'HANDSHAKE_BTN') {
-            const pat = document.getElementById('ENTRY_TOKEN').value.trim();
-            if(!pat) return log("<span class='text-red-500'>❌ PAT REQUIRED</span>");
-            
-            target.disabled = true;
-            target.innerText = "...";
-            await verifyIdentity(pat);
-            target.disabled = false;
-            target.innerText = "Verify";
-        }
+        // 1. Handshake Listener
+        const handshakeBtn = document.getElementById('HANDSHAKE_BTN');
+        if (handshakeBtn) {
+            handshakeBtn.addEventListener('click', async () => {
+                const pat = document.getElementById('ENTRY_TOKEN').value.trim();
+                if(!pat) return log("❌ PAT EMPTY");
 
-        // --- 2. THE BUFFERED FITTER (Tab Switching) ---
-        if (target.classList.contains('tab-btn')) {
-            const textArea = document.getElementById('MAIN_TEXT');
-            const newTab = target.id.replace('tab-', '');
-
-            fitterBuffer[activeTab] = textArea.value;
-
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('text-orange-500', 'border-orange-600');
-                btn.classList.add('text-zinc-500', 'border-zinc-800');
+                log("📡 Querying Gateway...");
+                try {
+                    const r = await fetch('https://api.github.com/user', { 
+                        headers: {'Authorization': `token ${pat}`} 
+                    });
+                    if(r.ok) {
+                        const d = await r.json();
+                        sessionPat = pat;
+                        window.USER_LOGIN = d.login;
+                        log(`<span class="text-emerald-400">✅ Handshake: ${d.login}</span>`);
+                        
+                        // Unlock Phase 2
+                        document.getElementById('VER_ID').style.color = "#10b981";
+                        document.getElementById('PHASE_2_UI').style.opacity = "1";
+                        document.getElementById('PHASE_2_UI').style.pointerEvents = "auto";
+                    } else {
+                        log(`❌ Denied: ${r.status}`);
+                    }
+                } catch(e) { log(`❌ Error: ${e.message}`); }
             });
-            target.classList.add('text-orange-500', 'border-orange-600');
-            target.classList.remove('text-zinc-500', 'border-zinc-800');
-
-            activeTab = newTab;
-            textArea.value = fitterBuffer[activeTab];
-            log(`[Fitter] Focused: ${activeTab}`);
         }
 
-        // --- 3. THE COMMISSION BATCH (GitHub Push) ---
-        if (target.id === 'PUSH_TRIGGER') {
-            const repoInput = document.getElementById('ENTRY_REPO').value.trim();
-            const content = document.getElementById('MAIN_TEXT').value;
+        // 2. Tab Switcher Listener
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const textArea = document.getElementById('MAIN_TEXT');
+                buffer[activeTab] = textArea.value; // Save current
 
-            if(!repoInput || !content || !window.SESSION_PAT) {
-                return log("<span class='text-orange-500'>⚠️ LOCK ERROR: Check PAT/Repo/Content</span>");
-            }
+                document.querySelectorAll('.tab-btn').forEach(b => {
+                    b.style.color = "#52525b"; // zinc-500
+                    b.style.borderColor = "transparent";
+                });
+                
+                btn.style.color = "#ea580c"; // orange-600
+                btn.style.borderBottom = "2px solid #ea580c";
 
-            // Ensure repo format is correct (user/repo)
-            // If the user only provides 'repo-name', we'll use the authenticated username
-            let repoPath = repoInput;
-            if (!repoPath.includes('/')) {
-                repoPath = `${window.USER_LOGIN}/${repoInput}`;
-            }
-
-            target.disabled = true;
-            target.innerText = "COMMISSIONING...";
-            await executePush(repoPath, activeTab, content);
-            target.disabled = false;
-            target.innerText = "Commission Batch";
-        }
-    });
-
-    async function verifyIdentity(pat) {
-        log("📡 Querying Gateway...");
-        try {
-            const r = await fetch('https://api.github.com/user', { 
-                headers: {'Authorization': `token ${pat}`} 
+                activeTab = btn.id.replace('tab-', '');
+                textArea.value = buffer[activeTab]; // Load new
+                log(`[Fitter] Focused: ${activeTab}`);
             });
-            if(r.ok) {
-                const d = await r.json();
-                window.USER_LOGIN = d.login; // Store login for path construction
-                log(`<span class="text-emerald-400">✅ Handshake: ${d.login}</span>`);
-                unlockUI(pat);
-            } else {
-                log(`<span class="text-red-500">❌ Access Denied: ${r.status}</span>`);
-            }
-        } catch(e) { log(`❌ Error: ${e.message}`); }
+        });
+
+        // 3. Commission/Push Listener
+        const pushBtn = document.getElementById('PUSH_TRIGGER');
+        if (pushBtn) {
+            pushBtn.addEventListener('click', async () => {
+                const repoInput = document.getElementById('ENTRY_REPO').value.trim();
+                const content = document.getElementById('MAIN_TEXT').value;
+                if(!repoInput || !content || !sessionPat) return log("⚠️ LOCK: Missing Data");
+
+                let repoPath = repoInput.includes('/') ? repoInput : `${window.USER_LOGIN}/${repoInput}`;
+
+                log(`[Batch] Checking SHA for ${activeTab}...`);
+                try {
+                    const getRef = await fetch(`https://api.github.com/repos/${repoPath}/contents/${activeTab}`, {
+                        headers: {'Authorization': `token ${sessionPat}`}
+                    });
+                    
+                    let sha = getRef.ok ? (await getRef.json()).sha : null;
+
+                    log(`[Batch] Commissioning...`);
+                    const pushReq = await fetch(`https://api.github.com/repos/${repoPath}/contents/${activeTab}`, {
+                        method: 'PUT',
+                        headers: {'Authorization': `token ${sessionPat}`},
+                        body: JSON.stringify({
+                            message: `PMC v0.4.0 Commission: ${activeTab}`,
+                            content: btoa(unescape(encodeURIComponent(content))),
+                            sha: sha
+                        })
+                    });
+
+                    if(pushReq.ok) log(`<span class="text-emerald-500">✨ ${activeTab} Stabilised.</span>`);
+                    else log("❌ Push Failed");
+                } catch(e) { log(`❌ Error: ${e.message}`); }
+            });
+        }
+    };
+
+    // Ensure script doesn't miss the window load event
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
     }
-
-    function unlockUI(pat) {
-        window.SESSION_PAT = pat;
-        const verId = document.getElementById('VER_ID');
-        const phase2 = document.getElementById('PHASE_2_UI');
-        
-        verId.innerText = "PMC v0.4.0";
-        verId.style.color = "#10b981";
-        verId.classList.remove('italic');
+})();
         
         phase2.style.opacity = "1";
         phase2.style.pointerEvents = "auto";
