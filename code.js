@@ -1,111 +1,79 @@
-/* PROJECT: PMC (Phase 2)
-   VERSION: v0.4.0
-   LOGIC: Direct Handshake & Fitter Buffer
-*/
+/* PMC v0.4.0 - RESTORED BASELINE */
 
 (function() {
     const buffer = { 'index.html': '', 'code.js': '', 'style.css': '', 'manifest.js': '', 'README.md': '' };
     let activeTab = 'index.html';
     let sessionPat = '';
-    let userLogin = '';
 
-    const log = (msg) => {
+    const log = (m) => {
         const el = document.getElementById('UI_LOG');
-        if (el) {
-            el.innerHTML = `<div class="border-b border-zinc-900 py-1 font-mono text-[9px] uppercase tracking-tighter animate-pulse">${msg}</div>` + el.innerHTML;
-        }
+        if (el) el.innerHTML = `<div class="border-b border-zinc-900 py-1 font-mono text-[9px] uppercase text-emerald-500">${m}</div>` + el.innerHTML;
     };
 
-    // Immediate confirmation of script execution
-    log("<span class='text-blue-400'>[System] Engine Warm. Awaiting PAT...</span>");
+    // LOGIC START CONFIRMATION
+    log("SYSTEM READY");
 
-    // 1. HANDSHAKE
-    const hsBtn = document.getElementById('HANDSHAKE_BTN');
-    if (hsBtn) {
-        hsBtn.onclick = async () => {
-            const pat = document.getElementById('ENTRY_TOKEN').value.trim();
-            if (!pat) return log("❌ Error: PAT required");
+    // 1. Handshake
+    document.getElementById('HANDSHAKE_BTN').onclick = function() {
+        const pat = document.getElementById('ENTRY_TOKEN').value.trim();
+        log("📡 Verifying...");
+        
+        fetch('https://api.github.com/user', {
+            headers: { 'Authorization': 'token ' + pat }
+        })
+        .then(r => r.ok ? r.json() : Promise.reject(r.status))
+        .then(d => {
+            sessionPat = pat;
+            log("✅ Hello " + d.login);
+            document.getElementById('VER_ID').style.color = "#10b981";
+            document.getElementById('PHASE_2_UI').style.opacity = "1";
+            document.getElementById('PHASE_2_UI').style.pointerEvents = "auto";
+        })
+        .catch(err => log("❌ Denied: " + err));
+    };
 
-            log("📡 Verifying...");
-            try {
-                const r = await fetch('https://api.github.com/user', {
-                    headers: { 'Authorization': `token ${pat}` }
-                });
-                if (r.ok) {
-                    const d = await r.json();
-                    sessionPat = pat;
-                    userLogin = d.login;
-                    log(`<span class="text-emerald-400">✅ Handshake: ${d.login}</span>`);
-                    
-                    document.getElementById('VER_ID').style.color = "#10b981";
-                    const phase2 = document.getElementById('PHASE_2_UI');
-                    phase2.style.opacity = "1";
-                    phase2.style.pointerEvents = "auto";
-                } else {
-                    log(`❌ Access Denied: ${r.status}`);
-                }
-            } catch (e) {
-                log("❌ Connection Failed");
-            }
-        };
-    }
-
-    // 2. FITTER TABS
+    // 2. Tabs
     document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.onclick = () => {
+        btn.onclick = function() {
             const area = document.getElementById('MAIN_TEXT');
-            // Save current work
             buffer[activeTab] = area.value;
-
-            // Update UI
+            
             document.querySelectorAll('.tab-btn').forEach(b => b.style.borderColor = "#27272a");
             btn.style.borderColor = "#ea580c";
 
-            // Switch content
             activeTab = btn.id.replace('tab-', '');
             area.value = buffer[activeTab];
-            log(`[Fitter] Tab: ${activeTab}`);
+            log("Tab: " + activeTab);
         };
     });
 
-    // 3. COMMISSION BATCH
-    const pushBtn = document.getElementById('PUSH_TRIGGER');
-    if (pushBtn) {
-        pushBtn.onclick = async () => {
-            const repo = document.getElementById('ENTRY_REPO').value.trim();
-            const content = document.getElementById('MAIN_TEXT').value;
-            if (!repo || !content || !sessionPat) return log("⚠️ Lock Error: Data Missing");
+    // 3. Push
+    document.getElementById('PUSH_TRIGGER').onclick = function() {
+        const repo = document.getElementById('ENTRY_REPO').value.trim();
+        const content = document.getElementById('MAIN_TEXT').value;
+        if (!repo || !content || !sessionPat) return log("⚠️ Check Inputs");
 
-            const path = repo.includes('/') ? repo : `${userLogin}/${repo}`;
-            log(`[Batch] Checking SHA for ${activeTab}...`);
-
-            try {
-                const res = await fetch(`https://api.github.com/repos/${path}/contents/${activeTab}`, {
-                    headers: { 'Authorization': `token ${sessionPat}` }
-                });
-                const sha = res.ok ? (await res.json()).sha : null;
-
-                log(`[Batch] Commissioning...`);
-                const push = await fetch(`https://api.github.com/repos/${path}/contents/${activeTab}`, {
-                    method: 'PUT',
-                    headers: { 'Authorization': `token ${sessionPat}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        message: `PMC Update: ${activeTab}`,
-                        content: btoa(unescape(encodeURIComponent(content))),
-                        sha: sha
-                    })
-                });
-
-                if (push.ok) log(`<span class="text-emerald-500">✨ ${activeTab} Commissioned.</span>`);
-                else log("❌ Push Failed");
-            } catch (e) {
-                log(`❌ Error: ${e.message}`);
-            }
-        };
-    }
+        log("🚀 Commissioning " + activeTab);
+        
+        fetch('https://api.github.com/repos/' + repo + '/contents/' + activeTab, {
+            headers: { 'Authorization': 'token ' + sessionPat }
+        })
+        .then(r => r.ok ? r.json() : { sha: null })
+        .then(file => {
+            return fetch('https://api.github.com/repos/' + repo + '/contents/' + activeTab, {
+                method: 'PUT',
+                headers: { 'Authorization': 'token ' + sessionPat },
+                body: JSON.stringify({
+                    message: "PMC Update",
+                    content: btoa(unescape(encodeURIComponent(content))),
+                    sha: file.sha || null
+                })
+            });
+        })
+        .then(r => r.ok ? log("✨ Success") : log("❌ Failed"))
+        .catch(e => log("❌ Error"));
+    };
 })();
-                        sha: sha
-                    })
                 });
 
                 if (push.ok) log(`<span class="text-emerald-500">✨ ${activeTab} Successfully Commissioned.</span>`);
