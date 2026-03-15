@@ -1,0 +1,5 @@
+.active-tab { border-bottom: 3px solid #ea580c !important; color: #ea580c !important; background: #18181b !important; }
+.staged { color: #ea580c !important; opacity: 1 !important; border-style: solid !important; }
+textarea { scrollbar-width: thin; scrollbar-color: #3f3f46 transparent; }
+.status-box { border: 1px dashed #27272a; padding: 2px 8px; border-radius: 4px; font-size: 7px; font-weight: 900; opacity: 0.3; text-transform: uppercase; }
+
