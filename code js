@@ -1,5 +1,11 @@
 let currentPath = 'index.html';
-let buffers = { 'index.html': '', 'code.js': '', 'style.css': '', 'manifest.js': '', 'README.md': '' };
+let buffers = { 
+    'index.html': '', 
+    'code.js': '', 
+    'style.css': '', 
+    'manifest.js': '', 
+    'README.md': '' 
+};
 let cachedUser = null;
 
 const WORKFLOWS = {
@@ -7,14 +13,23 @@ const WORKFLOWS = {
     clearout: "name: clear_out\non: [workflow_dispatch]\njobs:\n  clear:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v2\n      - run: |\n          git config user.email 'bot@pmc.internal'\n          git config user.name 'PMC-Bot'\n          git checkout --orphan temp\n          git add -A\n          git commit -m 'Clean Slate'\n          git branch -D main\n          git branch -m main\n          git push -f origin main"
 };
 
-window.onload = function() {
+// Initialisation
+window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('ENTRY_TOKEN').value = localStorage.getItem('pmc_token') || '';
     document.getElementById('ENTRY_REPO').value = localStorage.getItem('pmc_repo') || '';
     document.getElementById('INIT_REPO_NAME').value = localStorage.getItem('pmc_init_repo') || '';
+    
     const saved = localStorage.getItem('pmc_buffers');
-    if(saved) buffers = JSON.parse(saved);
+    if (saved) {
+        try {
+            const parsed = JSON.parse(saved);
+            // Merge saved data into default buffers to ensure all keys exist
+            Object.assign(buffers, parsed);
+        } catch(e) { console.error("Buffer restore failed"); }
+    }
+    
     switchBuffer('index.html');
-};
+});
 
 function saveCreds() {
     localStorage.setItem('pmc_token', document.getElementById('ENTRY_TOKEN').value);
@@ -23,27 +38,41 @@ function saveCreds() {
 }
 
 function saveActiveContent() {
-    buffers[currentPath] = document.getElementById('MAIN_TEXT').value;
+    const content = document.getElementById('MAIN_TEXT').value;
+    buffers[currentPath] = content;
     localStorage.setItem('pmc_buffers', JSON.stringify(buffers));
     updateStagingIcons();
 }
 
 function switchBuffer(newPath) {
+    // Save current before switching
     buffers[currentPath] = document.getElementById('MAIN_TEXT').value;
+    
+    // Update pointer
     currentPath = newPath;
+    
+    // UI Updates
     document.getElementById('MAIN_TEXT').value = buffers[newPath] || '';
-    document.querySelectorAll('[id^="tab-"]').forEach(btn => btn.classList.remove('active-tab'));
+    
+    // Tab Highlighting
+    document.querySelectorAll('[id^="tab-"]').forEach(btn => {
+        btn.classList.remove('active-tab');
+    });
     const activeBtn = document.getElementById('tab-' + newPath);
-    if(activeBtn) activeBtn.classList.add('active-tab');
+    if (activeBtn) activeBtn.classList.add('active-tab');
+    
     updateStagingIcons();
 }
 
 function updateStagingIcons() {
     Object.keys(buffers).forEach(key => {
         const el = document.getElementById('status-' + key);
-        if(el) {
-            if(buffers[key] && buffers[key].trim().length > 0) el.classList.add('staged');
-            else el.classList.remove('staged');
+        if (el) {
+            if (buffers[key] && buffers[key].trim().length > 0) {
+                el.classList.add('staged');
+            } else {
+                el.classList.remove('staged');
+            }
         }
     });
 }
@@ -54,10 +83,14 @@ function updateLog(msg) {
 }
 
 async function getUsername(pat) {
-    if(cachedUser) return cachedUser;
+    if (cachedUser) return cachedUser;
     try {
         const r = await fetch('https://api.github.com/user', { headers: {'Authorization':'token ' + pat} });
-        if(r.ok) { const d = await r.json(); cachedUser = d.login; return cachedUser; }
+        if (r.ok) { 
+            const d = await r.json(); 
+            cachedUser = d.login; 
+            return cachedUser; 
+        }
     } catch(e) { return null; }
     return null;
 }
@@ -65,27 +98,26 @@ async function getUsername(pat) {
 async function batchInit() {
     const pat = document.getElementById('ENTRY_TOKEN').value;
     const rawNames = document.getElementById('INIT_REPO_NAME').value;
-    if(!pat || !rawNames) return alert("Credentials required.");
+    if (!pat || !rawNames) return alert("Credentials required.");
     const user = await getUsername(pat);
-    if(!user) return updateLog("Auth Failed.");
+    if (!user) return updateLog("Auth Failed.");
 
     const names = rawNames.split(',').map(n => n.trim()).filter(n => n.length > 0);
-    for(let name of names) {
+    for (let name of names) {
         updateLog("Creating: " + name);
         const res = await fetch('https://api.github.com/user/repos', {
             method: 'POST',
             headers: {'Authorization': 'token ' + pat, 'Content-Type': 'application/json'},
             body: JSON.stringify({ name: name, auto_init: true })
         });
-        if(res.ok) {
+        if (res.ok) {
             await pushFile(pat, user, name, '.github/workflows/static.yml', WORKFLOWS.static);
             await pushFile(pat, user, name, '.github/workflows/clear_out.yml', WORKFLOWS.clearout);
             updateLog("Success: " + name);
         } else {
-            updateLog("Error: " + name + " (exists?)");
+            updateLog("Error: " + name);
         }
     }
-    updateLog("Batch Done.");
 }
 
 async function executeBatchDeployment() {
@@ -93,18 +125,47 @@ async function executeBatchDeployment() {
     const repo = document.getElementById('ENTRY_REPO').value;
     const files = Object.keys(buffers).filter(k => buffers[k].trim().length > 0);
     
-    if(!pat || !repo || files.length === 0) return alert("Check Assets/Repo/PAT.");
+    if (!pat || !repo || files.length === 0) return alert("Check Assets/Repo/PAT.");
     const user = await getUsername(pat);
-    if(!user) return updateLog("Auth Failed.");
+    if (!user) return updateLog("Auth Failed.");
 
     updateLog("Starting deployment...");
     for (const file of files) {
         updateLog("Pushing: " + file);
         const success = await pushFile(pat, user, repo, file, buffers[file]);
-        if(success) updateLog("Confirmed: " + file);
+        if (success) updateLog("Confirmed: " + file);
         else updateLog("Error: " + file);
     }
     updateLog("Batch Finished.");
+}
+
+async function pushFile(pat, user, repo, path, content) {
+    const url = 'https://api.github.com/repos/' + user + '/' + repo + '/contents/' + path;
+    let sha = null;
+    try {
+        const g = await fetch(url, {headers:{'Authorization':'token ' + pat}});
+        if (g.ok) { const d = await g.json(); sha = d.sha; }
+
+        const res = await fetch(url, {
+            method: 'PUT',
+            headers: {'Authorization':'token ' + pat, 'Content-Type':'application/json'},
+            body: JSON.stringify({
+                message: "PMC Update",
+                content: btoa(unescape(encodeURIComponent(content))),
+                sha: sha
+            })
+        });
+        return res.ok;
+    } catch(e) { return false; }
+}
+
+function clearCurrentBuffer() {
+    document.getElementById('MAIN_TEXT').value = '';
+    saveActiveContent();
+}
+
+function hardReset() {
+    if (confirm("Wipe local cache?")) { localStorage.clear(); location.reload(); }
 }
 
 async function pushFile(pat, user, repo, path, content) {
