@@ -2,6 +2,7 @@
   VERSION: v0.3.4
   AUTHOR: Peter Maben with Gemini
   LOGIC: PAT Narrative & Identity Diagnostic
+  
 */
 (function() {
     const VER = "v0.3.4";
@@ -39,140 +40,93 @@
         log("📡 PAT Invoked: Verifying Identity...");
         try {
             const r = await fetch('https://api.github.com/user', { 
-                headers: {'Authorization':'token ' + pat.trim()} 
-            });
-            if(r.ok) {
-                const d = await r.json();
-                window.cachedOwner = d.login;
-                log(`✅ Handshake Success: Hello <b>${d.login}</b>`);
-            } else {
-                log(`❌ PAT Rejected: ${r.status} ${r.statusText}`);
-            }
-        } catch(e) {
-            log(`❌ Connection Error: ${e.message}`);
-        }
-    }
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PMC v0.3.4</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-zinc-950 text-zinc-300 p-4 font-sans min-h-screen">
+    <div class="max-w-md mx-auto space-y-3 pb-10">
+        <header class="p-4 bg-zinc-900 border border-zinc-800 rounded-2xl flex justify-between items-center shadow-xl">
+            <div>
+                <h1 id="VER_ID" class="text-xl font-black text-zinc-700 uppercase italic tracking-tighter leading-none transition-colors duration-700">PMC v0.3.4</h1>
+                <p class="text-[8px] text-zinc-600 uppercase tracking-[0.2em] font-bold mt-1">PAT Handshake Build</p>
+            </div>
+            <button onclick="hardReset()" class="text-[9px] font-bold text-red-500/40 uppercase hover:text-red-500">[ Wipe Cache ]</button>
+        </header>
 
-    async function handlePhase1() {
-        const pat = document.getElementById('ENTRY_TOKEN').value;
-        if(!pat) return log("⚠️ Action Blocked: No PAT provided.");
-        if(!window.cachedOwner) await verifyIdentity(pat);
+        <div id="UI_LOG" class="bg-zinc-950 border border-zinc-900 rounded-xl p-2 text-[10px] font-mono text-zinc-500 text-center italic shadow-inner h-20 overflow-y-auto">
+            [Signal] Awaiting Logic Handshake...
+        </div>
+
+        <section class="p-4 bg-zinc-900 border-2 border-orange-600/20 rounded-2xl space-y-2 shadow-2xl">
+            <span class="text-[9px] uppercase font-black text-orange-600 tracking-widest italic px-1">Gateway: PAT</span>
+            <input type="password" id="ENTRY_TOKEN" placeholder="Paste PAT..." class="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-xs outline-none focus:border-orange-600 shadow-inner" oninput="saveActiveContent()">
+        </section>
+
+        <section class="p-4 bg-zinc-900 border border-zinc-800 rounded-2xl space-y-3 shadow-xl">
+            <span class="text-[9px] uppercase font-black text-zinc-600 tracking-widest italic px-1">Phase 1: Batch Init / Purge</span>
+            <div class="flex gap-2">
+                <input type="text" id="INIT_REPO_NAME" placeholder="repo-name OR repos: [list]" class="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-xs outline-none text-blue-400 font-mono" oninput="saveActiveContent()">
+                <button id="INIT_BTN" class="bg-orange-600 text-white font-black px-5 rounded-lg text-[9px] uppercase active:scale-95 transition-all italic">Execute</button>
+            </div>
+        </section>
+
+        <section class="space-y-2">
+            <div class="pt-2 px-1 flex justify-between items-end border-b border-zinc-900 pb-1">
+                <h2 class="text-[10px] font-black text-orange-600 uppercase tracking-widest italic">Phase 2: File Fitter</h2>
+            </div>
+            <input type="text" id="ENTRY_REPO" placeholder="Target Repository Name" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs outline-none text-blue-400 font-mono shadow-xl focus:border-orange-600 transition-all" oninput="saveActiveContent()">
+
+            <div class="grid grid-cols-5 gap-1">
+                <button id="tab-index.html" class="tab-btn bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase transition-all">HTML</button>
+                <button id="tab-code.js" class="tab-btn bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase transition-all">JS</button>
+                <button id="tab-style.css" class="tab-btn bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase transition-all">CSS</button>
+                <button id="tab-manifest.js" class="tab-btn bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase transition-all">Manifest</button>
+                <button id="tab-README.md" class="tab-btn bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase transition-all">MD</button>
+            </div>
+
+            <div class="relative">
+                <textarea id="MAIN_TEXT" class="w-full h-64 bg-zinc-900 border border-zinc-800 rounded-b-xl rounded-tr-xl p-4 text-[10px] font-mono focus:border-orange-600 outline-none shadow-inner leading-relaxed resize-none" placeholder="Paste code here..."></textarea>
+                <button id="CLEAR_BTN" class="absolute bottom-2 right-2 text-red-500/30 hover:text-red-500 text-[8px] font-bold uppercase tracking-tighter">[ Clear ]</button>
+            </div>
+
+            <div class="p-3 bg-zinc-900 border border-zinc-800 rounded-xl shadow-xl">
+                <div id="STAGING_BAR" class="flex flex-wrap justify-center gap-2 mb-3">
+                    <div id="status-index.html" class="status-box">HTML</div>
+                    <div id="status-code.js" class="status-box">JS</div>
+                    <div id="status-style.css" class="status-box">CSS</div>
+                    <div id="status-manifest.js" class="status-box">MANIFEST</div>
+                    <div id="status-README.md" class="status-box">MD</div>
+                </div>
+                <button id="PUSH_TRIGGER" class="w-full bg-zinc-800 border border-zinc-700 text-zinc-400 font-bold py-3 rounded-lg uppercase text-[9px] tracking-[0.2em] transition-all hover:bg-zinc-700 hover:text-white">Commission Batch</button>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const log = (m) => {
+            const el = document.getElementById('UI_LOG');
+            if(el) el.innerHTML = m + '<br>' + el.innerHTML;
+        };
         
-        const input = document.getElementById('INIT_REPO_NAME').value.trim();
-        
-        if(input.includes('repos:')) {
-            const targets = input.split('\n').filter(l => l.includes('-')).map(l => l.replace('-', '').trim());
-            log(`⚠️ <b>Purge Initiated:</b> ${targets.length} repos.`);
-            for(let name of targets) {
-                const res = await fetch(`https://api.github.com/repos/${window.cachedOwner}/${name}`, {
-                    method: 'DELETE',
-                    headers: {'Authorization': 'token ' + pat}
-                });
-                log(res.ok ? `🗑️ Deleted: ${name}` : `❌ Fail: ${name}`);
-            }
-        } else {
-            const names = input.split(',').map(n => n.trim()).filter(n => n);
-            log(`🚀 <b>Narrative:</b> Creating ${names.length} instances.`);
-            for(let name of names) {
-                log(`🛠️ Creating: <b>${name}</b>...`);
-                const res = await fetch('https://api.github.com/user/repos', {
-                    method: 'POST',
-                    headers: {'Authorization': 'token ' + pat, 'Content-Type': 'application/json'},
-                    body: JSON.stringify({ name: name, auto_init: true })
-                });
-                if(res.ok) log(`✨ <b>${name}</b> Created & Workflow Ready.`);
-                else log(`❌ Conflict: ${name} exists.`);
-            }
-        }
-    }
-
-    async function executeBatchDeployment() {
-        const pat = document.getElementById('ENTRY_TOKEN').value;
-        const repo = document.getElementById('ENTRY_REPO').value;
-        if(!pat || !repo) return log("❌ Error: Target/PAT missing.");
-        
-        const owner = window.cachedOwner || await getOwner(pat);
-        const files = Object.keys(buffers).filter(k => buffers[k].trim().length > 0);
-        
-        log(`📡 <b>Commissioning Batch</b> to ${repo}...`);
-        for (const file of files) {
-            const ok = await pushFile(pat, owner, repo, file, buffers[file]);
-            log((ok ? "🟢 Pushed: " : "🔴 Fail: ") + file);
-        }
-        log("🏁 <b>Batch Transfer Finalised.</b>");
-    }
-
-    async function pushFile(pat, user, repo, path, content) {
-        const url = `https://api.github.com/repos/${user}/${repo}/contents/${path}`;
-        let sha = null;
-        const g = await fetch(url, {headers:{'Authorization':'token ' + pat}});
-        if(g.ok) { const d = await g.json(); sha = d.sha; }
-        const res = await fetch(url, {
-            method: 'PUT',
-            headers: {'Authorization':'token ' + pat, 'Content-Type':'application/json'},
-            body: JSON.stringify({ message: `PMC ${VER} Commission`, content: btoa(unescape(encodeURIComponent(content))), sha: sha })
-        });
-        return res.ok;
-    }
-
-    function switchBuffer(path) {
-        buffers[currentPath] = document.getElementById('MAIN_TEXT').value;
-        currentPath = path;
-        document.getElementById('MAIN_TEXT').value = buffers[path] || '';
-        document.querySelectorAll('.tab-btn').forEach(b => {
-            b.style.background = "#18181b";
-            b.style.color = "#52525b";
-        });
-        const active = document.getElementById('tab-' + path);
-        if(active) { active.style.background = "#27272a"; active.style.color = "#ea580c"; }
-    }
-
-    function saveActiveContent() {
-        buffers[currentPath] = document.getElementById('MAIN_TEXT').value;
-        localStorage.setItem('pmc_buffers', JSON.stringify(buffers));
-        localStorage.setItem('pmc_token', document.getElementById('ENTRY_TOKEN').value);
-        localStorage.setItem('pmc_repo', document.getElementById('ENTRY_REPO').value);
-        localStorage.setItem('pmc_init_repo', document.getElementById('INIT_REPO_NAME').value);
-    }
-
-    function restoreState() {
-        document.getElementById('ENTRY_TOKEN').value = localStorage.getItem('pmc_token') || '';
-        document.getElementById('ENTRY_REPO').value = localStorage.getItem('pmc_repo') || '';
-        document.getElementById('INIT_REPO_NAME').value = localStorage.getItem('pmc_init_repo') || '';
-        const saved = localStorage.getItem('pmc_buffers');
-        if (saved) { try { buffers = JSON.parse(saved); } catch(e) {} }
-    }
-
-    ignite();
-})();
-        try {
-            const g = await fetch(url, {headers:{'Authorization':'token ' + pat}});
-            if(g.ok) { const d = await g.json(); sha = d.sha; }
-            const res = await fetch(url, {
-                method: 'PUT',
-                headers: {'Authorization':'token ' + pat, 'Content-Type':'application/json'},
-                body: JSON.stringify({ message: `PMC ${VER} Commission`, content: btoa(unescape(encodeURIComponent(content))), sha: sha })
-            });
-            return res.ok;
-        } catch(e) { return false; }
-    }
-
-    async function getOwner(pat) {
-        if(window.cachedOwner) return window.cachedOwner;
-        const r = await fetch('https://api.github.com/user', { headers: {'Authorization':'token ' + pat} });
-        const d = await r.json();
-        window.cachedOwner = d.login;
-        return d.login;
-    }
-
-    function switchBuffer(path) {
-        buffers[currentPath] = document.getElementById('MAIN_TEXT').value;
-        currentPath = path;
-        document.getElementById('MAIN_TEXT').value = buffers[path] || '';
-        
-        document.querySelectorAll('.tab-btn').forEach(b => {
-            b.classList.remove('bg-zinc-800', 'text-orange-500');
-            b.classList.add('bg-zinc-900', 'text-zinc-500');
+        // Loader forces download of latest code.js by appending a timestamp
+        fetch('./code.js?nocache=' + new Date().getTime())
+            .then(r => r.text())
+            .then(code => {
+                const s = document.createElement('script');
+                s.textContent = code;
+                document.body.appendChild(s);
+                log("<span class='text-zinc-400'>[System] Logic Streamed. Handshake pending...</span>");
+            })
+            .catch(e => log("<span class='text-red-500'>[Error] Logic injection failed.</span>"));
+    </script>
+</body>
+</html>
         });
         const active = document.getElementById('tab-' + path);
         if(active) {
