@@ -39,21 +39,24 @@
         </section>
 
         <section id="PHASE_2_UI" class="space-y-2 opacity-30 pointer-events-none transition-opacity">
-            <div class="pt-2 px-1 border-b border-zinc-900 pb-1">
-                <h2 class="text-[10px] font-black text-orange-600 uppercase tracking-widest italic">Phase 2: File Fitter</h2>
-            </div>
-            <input type="text" id="ENTRY_REPO" placeholder="Target Repository Name" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs outline-none text-blue-400 font-mono">
-            
-            <div class="grid grid-cols-5 gap-1">
-                <button id="tab-index.html" onclick="window.switchTab('tab-index.html')" class="tab-btn bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase text-zinc-500">HTML</button>
-                <button id="tab-code.js" onclick="window.switchTab('tab-code.js')" class="tab-btn bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase text-zinc-500">JS</button>
-                <button id="tab-style.css" onclick="window.switchTab('tab-style.css')" class="tab-btn bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase text-zinc-500">CSS</button>
-                <button id="tab-manifest.js" onclick="window.switchTab('tab-manifest.js')" class="tab-btn bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase text-zinc-500">Manifest</button>
-                <button id="tab-README.md" onclick="window.switchTab('tab-README.md')" class="tab-btn bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase text-zinc-500">MD</button>
-            </div>
-            <textarea id="MAIN_TEXT" class="w-full h-64 bg-zinc-900 border border-zinc-800 rounded-b-xl rounded-tr-xl p-4 text-[10px] font-mono outline-none resize-none" placeholder="Paste code here..."></textarea>
-            <button id="PUSH_TRIGGER" onclick="window.runPush()" class="w-full bg-zinc-800 border border-zinc-700 text-zinc-400 font-bold py-3 rounded-lg uppercase text-[9px] tracking-[0.2em] mt-2 active:bg-emerald-600 active:text-white">Commission Batch</button>
-        </section>
+    <div class="pt-2 px-1 border-b border-zinc-900 pb-1 flex justify-between items-end">
+        <div>
+            <h2 class="text-[10px] font-black text-orange-600 uppercase tracking-widest italic">Phase 2: File Fitter</h2>
+            <p class="text-[7px] text-zinc-600 uppercase font-bold tracking-tighter">Asset Readiness</p>
+        </div>
+        <div class="flex gap-1.5 pb-1" id="ASSET_CHECKLIST">
+            <div id="stat-index.html" class="w-1.5 h-1.5 rounded-full bg-zinc-800 shadow-[0_0_5px_rgba(0,0,0,0.5)] transition-all duration-500"></div>
+            <div id="stat-code.js" class="w-1.5 h-1.5 rounded-full bg-zinc-800 shadow-[0_0_5px_rgba(0,0,0,0.5)] transition-all duration-500"></div>
+            <div id="stat-style.css" class="w-1.5 h-1.5 rounded-full bg-zinc-800 shadow-[0_0_5px_rgba(0,0,0,0.5)] transition-all duration-500"></div>
+            <div id="stat-manifest.js" class="w-1.5 h-1.5 rounded-full bg-zinc-800 shadow-[0_0_5px_rgba(0,0,0,0.5)] transition-all duration-500"></div>
+            <div id="stat-README.md" class="w-1.5 h-1.5 rounded-full bg-zinc-800 shadow-[0_0_5px_rgba(0,0,0,0.5)] transition-all duration-500"></div>
+        </div>
+    </div>
+
+    <input type="text" id="ENTRY_REPO" placeholder="Target Repository Name" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs outline-none text-blue-400 font-mono focus:border-blue-900">
+    
+    </section>
+
     </div>
 
     <script>
