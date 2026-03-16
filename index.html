@@ -4,78 +4,105 @@
     <meta charset="UTF-8">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PMC_v0.7.0</title>
+    <title>PMC_v0.7.6</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Framework Furniture */
+        .pmc-container { @apply max-w-md mx-auto space-y-3 pb-10; }
+        .pmc-card { @apply p-4 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl; }
+        .pmc-card-gateway { @apply pmc-card border-2 border-orange-600/20 space-y-2; }
+        .pmc-header { @apply p-4 bg-zinc-900 border border-zinc-800 rounded-2xl flex justify-between items-center shadow-xl; }
+        
+        /* Inputs & Actions */
+        .pmc-input { @apply w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-xs outline-none text-blue-400 font-mono focus:border-blue-600 transition-all; }
+        .pmc-textarea { @apply w-full h-64 bg-zinc-900 border border-zinc-800 rounded-b-xl rounded-tr-xl p-4 text-[10px] font-mono outline-none resize-none select-text; }
+        .pmc-btn { @apply bg-zinc-800 text-zinc-400 font-black px-4 rounded-lg text-[9px] uppercase border border-zinc-700 active:bg-orange-600 active:text-white transition-all italic; }
+        .pmc-btn-push { @apply w-full bg-zinc-800 border border-zinc-700 text-zinc-500 font-bold py-3 rounded-lg uppercase text-[9px] tracking-[0.2em] mt-2 active:bg-emerald-600 transition-colors; }
+        
+        /* Navigation & Status */
+        .pmc-tab { @apply bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase text-zinc-500 transition-colors; }
+        .pmc-tab.active { @apply border-b-transparent text-orange-500 bg-zinc-800; }
+        .pmc-dot { @apply w-1.5 h-1.5 rounded-full bg-zinc-800 transition-all duration-500; }
+        
+        /* Logs */
+        .pmc-log-window { @apply bg-zinc-950 border border-zinc-900 rounded-xl p-2 text-[10px] h-24 overflow-y-auto flex flex-col-reverse shadow-inner; }
+        .log-entry { @apply border-b border-zinc-900 py-1 font-mono text-[9px] uppercase tracking-tighter text-emerald-500 select-text; }
+        
+        /* Helpers */
+        .pmc-label { @apply text-[9px] uppercase font-black tracking-widest italic px-1; }
+        .pmc-manifest-bar { @apply flex justify-between items-center p-2 bg-zinc-900/50 rounded-lg border border-zinc-800; }
+    </style>
 </head>
 <body class="bg-zinc-950 text-zinc-300 p-4 font-sans min-h-screen">
-    <div class="max-w-md mx-auto space-y-3 pb-10">
+    <div class="pmc-container">
         
-        <header class="p-4 bg-zinc-900 border border-zinc-800 rounded-2xl flex justify-between items-center shadow-xl">
+        <header class="pmc-header">
             <div>
-                <h1 id="VER_ID" class="text-xl font-black text-zinc-700 uppercase italic tracking-tighter">PMC v0.7.0</h1>
-                <p class="text-[8px] text-zinc-600 uppercase tracking-[0.2em] font-bold mt-1">Peter Maben | Gemini</p>
+                <h1 id="VER_ID" class="text-xl font-black text-zinc-700 uppercase italic tracking-tighter">PMC v0.7.6</h1>
+                <p class="text-[8px] text-zinc-600 uppercase tracking-[0.2em] font-bold mt-1 italic">Pure Class Architecture</p>
             </div>
-            <button onclick="location.reload(true)" class="text-[9px] font-bold text-red-500 uppercase px-2 py-1">[ Hard_Reload ]</button>
+            <button onclick="window.runRestart()" class="pmc-btn py-2 text-orange-500 border-orange-900/30">Restart</button>
         </header>
 
-        <div id="UI_LOG" class="bg-zinc-950 border border-zinc-900 rounded-xl p-2 text-[10px] font-mono text-zinc-500 text-center h-20 overflow-y-auto flex flex-col-reverse">
-            <div class="py-1 italic">[System] Awaiting_Logic_Stream...</div>
+        <div id="UI_LOG" class="pmc-log-window">
+            <div class="py-1 italic text-zinc-600">[System] Awaiting_Logic_Stream...</div>
         </div>
 
-        <section class="p-4 bg-zinc-900 border-2 border-orange-600/20 rounded-2xl space-y-2">
-            <span class="text-[9px] uppercase font-black text-orange-600 tracking-widest italic px-1">Gateway: PAT</span>
+        <section class="pmc-card-gateway">
+            <span class="pmc-label text-orange-600">Gateway: PAT</span>
+            <input type="password" id="ENTRY_TOKEN" oninput="window.silentHandshake()" autocomplete="off" placeholder="Paste PAT..." class="pmc-input !text-orange-500 !border-orange-900/50">
+        </section>
+
+        <section id="PHASE_1_UI" class="pmc-card space-y-3 opacity-30 pointer-events-none transition-all duration-500">
+            <span class="pmc-label text-zinc-600">Phase 1: Repo Prepare</span>
             <div class="flex gap-2">
-                <input type="password" id="ENTRY_TOKEN" autocomplete="off" placeholder="Paste PAT..." class="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-xs outline-none text-orange-500 font-mono">
-                <button onclick="window.runHandshake()" id="HANDSHAKE_BTN" class="bg-zinc-800 text-orange-500 font-black px-4 rounded-lg text-[9px] uppercase border border-zinc-700 active:bg-orange-600">Verify</button>
+                <input type="text" id="INIT_REPO_NAME" placeholder="New Repo Name" class="pmc-input">
+                <button onclick="window.runInit()" class="pmc-btn px-6">Init</button>
             </div>
         </section>
 
-        <section id="PHASE_1_UI" class="p-4 bg-zinc-900 border border-zinc-800 rounded-2xl space-y-3 opacity-30 pointer-events-none">
-            <span class="text-[9px] uppercase font-black text-zinc-600 tracking-widest italic px-1">Phase 1: Repo Prepare</span>
-            <div class="flex gap-2">
-                <input type="text" id="INIT_REPO_NAME" placeholder="New Repo Name" class="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-xs outline-none text-blue-400 font-mono">
-                <button onclick="window.runInit()" class="bg-zinc-800 text-zinc-500 font-black px-5 rounded-lg text-[9px] uppercase border border-zinc-700 italic">Init</button>
-            </div>
-        </section>
-
-        <section id="PHASE_2_UI" class="space-y-2 opacity-30 pointer-events-none transition-opacity">
+        <section id="PHASE_2_UI" class="space-y-2 opacity-30 pointer-events-none transition-all duration-500">
             <div class="pt-2 px-1 border-b border-zinc-900 pb-1 flex justify-between items-end">
                 <h2 class="text-[10px] font-black text-orange-600 uppercase tracking-widest italic">Phase 2: File Fitter</h2>
                 <div class="flex gap-1.5 pb-1" id="ASSET_CHECKLIST">
-                    <div id="stat-index.html" class="w-1.5 h-1.5 rounded-full bg-zinc-800 shadow-inner"></div>
-                    <div id="stat-code.js" class="w-1.5 h-1.5 rounded-full bg-zinc-800 shadow-inner"></div>
-                    <div id="stat-style.css" class="w-1.5 h-1.5 rounded-full bg-zinc-800 shadow-inner"></div>
-                    <div id="stat-manifest.js" class="w-1.5 h-1.5 rounded-full bg-zinc-800 shadow-inner"></div>
-                    <div id="stat-README.md" class="w-1.5 h-1.5 rounded-full bg-zinc-800 shadow-inner"></div>
+                    <div id="stat-index.html" class="pmc-dot"></div>
+                    <div id="stat-code.js" class="pmc-dot"></div>
+                    <div id="stat-style.css" class="pmc-dot"></div>
+                    <div id="stat-manifest.js" class="pmc-dot"></div>
+                    <div id="stat-README.md" class="pmc-dot"></div>
                 </div>
             </div>
-            <input type="text" id="ENTRY_REPO" placeholder="Target Repository Name" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs outline-none text-blue-400 font-mono">
+            <input type="text" id="ENTRY_REPO" placeholder="Target Repository" class="pmc-input">
             
             <div class="grid grid-cols-5 gap-1">
-                <button id="tab-index.html" onclick="window.switchTab('tab-index.html')" class="bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase text-zinc-500">HTML</button>
-                <button id="tab-code.js" onclick="window.switchTab('tab-code.js')" class="bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase text-zinc-500">JS</button>
-                <button id="tab-style.css" onclick="window.switchTab('tab-style.css')" class="bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase text-zinc-500">CSS</button>
-                <button id="tab-manifest.js" onclick="window.switchTab('tab-manifest.js')" class="bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase text-zinc-500">JSON</button>
-                <button id="tab-README.md" onclick="window.switchTab('tab-README.md')" class="bg-zinc-900 border border-zinc-800 p-2 rounded-t-lg text-[7px] font-black uppercase text-zinc-500">MD</button>
+                <button id="tab-index.html" onclick="window.switchTab('tab-index.html')" class="pmc-tab active">HTML</button>
+                <button id="tab-code.js" onclick="window.switchTab('tab-code.js')" class="pmc-tab">JS</button>
+                <button id="tab-style.css" onclick="window.switchTab('tab-style.css')" class="pmc-tab">CSS</button>
+                <button id="tab-manifest.js" onclick="window.switchTab('tab-manifest.js')" class="pmc-tab">JSON</button>
+                <button id="tab-README.md" onclick="window.switchTab('tab-README.md')" class="pmc-tab">MD</button>
             </div>
-            <textarea id="MAIN_TEXT" class="w-full h-64 bg-zinc-900 border border-zinc-800 rounded-b-xl rounded-tr-xl p-4 text-[10px] font-mono outline-none resize-none" placeholder="Paste code here..."></textarea>
-            <button onclick="window.runPush()" id="PUSH_TRIGGER" class="w-full bg-zinc-800 border border-zinc-700 text-zinc-500 font-bold py-3 rounded-lg uppercase text-[9px] tracking-[0.2em] mt-2 active:bg-emerald-600">Commission Batch</button>
+            <textarea id="MAIN_TEXT" class="pmc-textarea" placeholder="Paste content..."></textarea>
+            
+            <div id="MANIFEST_TOOLS" class="hidden pmc-manifest-bar">
+                <span class="text-[8px] text-zinc-500 font-bold uppercase italic">CSV Detector Active</span>
+                <button onclick="window.jsonifyManifest()" class="text-[8px] font-black text-emerald-500 uppercase">[ JSONify List ]</button>
+            </div>
+
+            <button onclick="window.runPush()" id="PUSH_TRIGGER" class="pmc-btn-push">Commission Asset</button>
         </section>
     </div>
 
     <script>
         window.addEventListener('load', () => {
-            const version = "0.7.0";
-            fetch('./code.js?v=' + version + '&t=' + Date.now())
+            const v = "0.7.6";
+            fetch('./code.js?v=' + v + '&t=' + Date.now())
                 .then(r => r.text())
-                .then(code => {
+                .then(c => {
                     const s = document.createElement('script');
-                    s.textContent = code;
+                    s.textContent = c;
                     document.body.appendChild(s);
                 })
-                .catch(e => {
-                    document.getElementById('UI_LOG').innerHTML = "<div class='text-red-500'>[Error] Sync_Failed.</div>";
-                });
+                .catch(e => { document.getElementById('UI_LOG').innerHTML = "[Error] Sync_Failed."; });
         });
     </script>
 </body>
