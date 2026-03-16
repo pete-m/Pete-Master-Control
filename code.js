@@ -1,7 +1,7 @@
 /* PROJECT: PMC (Phase 2)
    AUTHOR: Peter Maben with Gemini
-   VERSION: v0.4.6
-   STATUS: Direct Injection Stabilization
+   VERSION: v0.4.7
+   STATUS: Global Scope Provider
 */
 
 const buffer = { 'index.html': '', 'code.js': '', 'style.css': '', 'manifest.js': '', 'README.md': '' };
@@ -14,8 +14,8 @@ const log = (m) => {
     if (el) el.innerHTML = `<div class="border-b border-zinc-900 py-1 font-mono text-[9px] uppercase tracking-tighter text-emerald-500">${m}</div>` + el.innerHTML;
 };
 
-// Phase 0: Handshake
-const runHandshake = async () => {
+// Expose functions globally
+window.runHandshake = async () => {
     const pat = document.getElementById('ENTRY_TOKEN').value.trim();
     log("📡 VERIFYING...");
     try {
@@ -32,8 +32,7 @@ const runHandshake = async () => {
     } catch (e) { log("❌ NO CONNECTION"); }
 };
 
-// Phase 1: Navigator
-const runInit = async () => {
+window.runInit = async () => {
     const repoName = document.getElementById('INIT_REPO_NAME').value.trim();
     log(`INIT: ${repoName}...`);
     try {
@@ -49,15 +48,12 @@ const runInit = async () => {
     } catch (e) { log("❌ ERROR"); }
 };
 
-// Phase 2: Commission
-const runPush = async () => {
+window.runPush = async () => {
     const repoInput = document.getElementById('ENTRY_REPO').value.trim();
     const content = document.getElementById('MAIN_TEXT').value;
     if (!repoInput || !content || !sessionPat) return log("⚠️ DATA MISSING");
-    
     const path = repoInput.includes('/') ? repoInput : `${userLogin}/${repoInput}`;
-    log(`🚀 PUSHING TO ${path}...`);
-    
+    log(`🚀 PUSHING ${activeTab}...`);
     try {
         const res = await fetch(`https://api.github.com/repos/${path}/contents/${activeTab}`, {
             headers: { 'Authorization': `token ${sessionPat}` }
@@ -73,34 +69,16 @@ const runPush = async () => {
             })
         });
         if (push.ok) log(`✨ ${activeTab} STABILISED.`);
-        else {
-            const err = await push.json();
-            log(`❌ FAIL: ${err.message}`);
-        }
+        else log(`❌ PUSH FAIL.`);
     } catch (e) { log(`❌ ERROR: ${e.message}`); }
 };
 
-// Attach Logic Directly
-const initHooks = () => {
-    const hBtn = document.getElementById('HANDSHAKE_BTN');
-    const iBtn = document.getElementById('INIT_BTN');
-    const pBtn = document.getElementById('PUSH_TRIGGER');
-
-    if (hBtn) hBtn.onclick = runHandshake;
-    if (iBtn) iBtn.onclick = runInit;
-    if (pBtn) pBtn.onclick = runPush;
-
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.onclick = () => {
-            buffer[activeTab] = document.getElementById('MAIN_TEXT').value;
-            activeTab = btn.id.replace('tab-', '');
-            document.getElementById('MAIN_TEXT').value = buffer[activeTab];
-            log(`TAB: ${activeTab}`);
-        };
-    });
-
-    log("ENGINE WARM. HOOKS LIVE.");
+window.switchTab = (tabId) => {
+    buffer[activeTab] = document.getElementById('MAIN_TEXT').value;
+    activeTab = tabId.replace('tab-', '');
+    document.getElementById('MAIN_TEXT').value = buffer[activeTab];
+    log(`TAB: ${activeTab}`);
 };
 
-// Fire immediately
-initHooks();
+// Final sanity log
+log("ENGINE WARM. GLOBALS INJECTED.");
