@@ -11,35 +11,45 @@ const log = (m) => {
     const el = document.getElementById('UI_LOG');
     if (el) el.innerHTML = `<div class="border-b border-zinc-900 py-1 font-mono text-[9px] uppercase tracking-tighter text-emerald-500">${m}</div>` + el.innerHTML;
 };
-
 window.runHandshake = async () => {
-    // Visual Feedback
-    document.getElementById('HANDSHAKE_BTN').style.background = "#ea580c";
-    setTimeout(() => document.getElementById('HANDSHAKE_BTN').style.background = "", 200);
+    // 1. Immediate Visual & Log Feedback
+    const btn = document.getElementById('HANDSHAKE_BTN');
+    btn.style.background = "#ea580c";
+    log("⏳ INITIATING HANDSHAKE..."); 
+    
+    setTimeout(() => btn.style.background = "", 200);
 
     const pat = document.getElementById('ENTRY_TOKEN').value.trim();
-    if (!pat) return log("❌ PAT MISSING");
+    if (!pat) {
+        log("❌ ERROR: PAT EMPTY");
+        return;
+    }
 
-    log("📡 VERIFYING...");
     try {
-        const r = await fetch('https://api.github.com/user', { headers: { 'Authorization': `token ${pat}` } });
+        log("📡 CONNECTING TO GITHUB...");
+        const r = await fetch('https://api.github.com/user', { 
+            headers: { 'Authorization': `token ${pat}` } 
+        });
+
         if (r.ok) {
             const d = await r.json();
             sessionPat = pat; userLogin = d.login;
-            log(`✅ OK: ${d.login}`);
+            log(`✅ SUCCESS: ${d.login}`);
             
-            // Force UI reveal
+            // UI Unlock
             document.getElementById('PHASE_1_UI').style.opacity = "1";
             document.getElementById('PHASE_1_UI').style.pointerEvents = "auto";
             document.getElementById('PHASE_2_UI').style.opacity = "1";
             document.getElementById('PHASE_2_UI').style.pointerEvents = "auto";
             document.getElementById('VER_ID').style.color = "#10b981";
         } else { 
-            log(`❌ DENIED: ${r.status}`);
-            alert("GitHub Denied Access. Check PAT permissions.");
+            log(`❌ GITHUB REJECTED: ${r.status}`);
         }
-    } catch (e) { log("❌ CONNECTION ERROR"); }
+    } catch (e) { 
+        log(`❌ BROWSER BLOCK: ${e.message}`);
+    }
 };
+
 
 window.runPush = async () => {
     const repoInput = document.getElementById('ENTRY_REPO').value.trim();
