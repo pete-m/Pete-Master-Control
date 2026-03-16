@@ -1,8 +1,8 @@
 /* PROJECT: PMC (Phase 2) 
-   VERSION: 0.6.3 
+   VERSION: 0.7.0 
 */
 (function() {
-    const HARD_VER = "0.6.3";
+    const HARD_VER = "0.7.0";
     const files = ['index.html', 'code.js', 'style.css', 'manifest.js', 'README.md'];
     const buffer = { 'index.html': '', 'code.js': '', 'style.css': '', 'manifest.js': '', 'README.md': '' };
     let sessionPat = '', userLogin = '', activeTab = 'index.html';
@@ -20,20 +20,49 @@
                 });
                 const dot = document.getElementById(`stat-${f}`);
                 if (dot) {
-                    if (r.ok) {
-                        dot.style.backgroundColor = "#10b981"; // Emerald
-                        dot.style.boxShadow = "0 0 8px #10b981"; // Glow
-                    } else {
-                        dot.style.backgroundColor = "#27272a"; // Reset to Zinc
-                        dot.style.boxShadow = "none";
-                    }
+                    dot.style.backgroundColor = r.ok ? "#10b981" : "#27272a";
+                    dot.style.boxShadow = r.ok ? "0 0 8px #10b981" : "none";
                 }
             } catch (e) {}
         }
     };
 
-    // Keep your window.runHandshake, window.runInit, window.runPush as they were...
-    // Just ensure window.runPush calls updateAssetUI(repo) upon success.
+    window.runHandshake = async () => {
+        const pat = document.getElementById('ENTRY_TOKEN').value.trim();
+        log("📡 VERIFYING...");
+        try {
+            const r = await fetch('https://api.github.com/user', { headers: { 'Authorization': `token ${pat}` } });
+            if (r.ok) {
+                const d = await r.json();
+                sessionPat = pat; userLogin = d.login;
+                log(`✅ OK: ${d.login}`);
+                ['PHASE_1_UI', 'PHASE_2_UI'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if(el) { el.style.opacity = "1"; el.style.pointerEvents = "auto"; }
+                });
+                document.getElementById('VER_ID').style.color = "#10b981";
+            } else { log(`❌ FAIL: ${r.status}`); }
+        } catch (e) { log("❌ NO_CONNECTION"); }
+    };
+
+    window.runInit = async () => {
+        const repoName = document.getElementById('INIT_REPO_NAME').value.trim();
+        if(!repoName) return log("⚠️ NAME_REQ.");
+        log(`PREPARING: ${repoName}...`);
+        try {
+            const r = await fetch('https://api.github.com/user/repos', {
+                method: 'POST',
+                headers: { 'Authorization': `token ${sessionPat}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: repoName, auto_init: true })
+            });
+            if (r.ok) {
+                log(`✅ REPO_READY.`);
+                const path = `${userLogin}/${repoName}`;
+                document.getElementById('ENTRY_REPO').value = path;
+                updateAssetUI(path);
+            }
+        } catch (e) { log("❌ ERROR"); }
+    };
 
     window.runPush = async () => {
         const repo = document.getElementById('ENTRY_REPO').value.trim();
@@ -48,14 +77,21 @@
             const push = await fetch(`https://api.github.com/repos/${path}/contents/${activeTab}`, {
                 method: 'PUT',
                 headers: { 'Authorization': `token ${sessionPat}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: "PMC Sync", content: btoa(unescape(encodeURIComponent(content))), sha: sha })
+                body: JSON.stringify({ message: "PMC_Sync", content: btoa(unescape(encodeURIComponent(content))), sha: sha })
             });
             if (push.ok) { 
-                log(`✨ ${activeTab} STABILISED.`); 
-                updateAssetUI(path); // Update the glow dots immediately
+                log(`✨ ${activeTab} SAVED.`); 
+                updateAssetUI(path); 
             }
         } catch (e) { log(`❌ FAIL`); }
     };
 
-    log(`ENGINE WARM. v${HARD_VER} SYNCED.`);
+    window.switchTab = (t) => {
+        buffer[activeTab] = document.getElementById('MAIN_TEXT').value;
+        activeTab = t.replace('tab-', '');
+        document.getElementById('MAIN_TEXT').value = buffer[activeTab];
+        log(`TAB: ${activeTab}`);
+    };
+
+    log(`ENGINE_WARM. v${HARD_VER} SYNCED.`);
 })();
