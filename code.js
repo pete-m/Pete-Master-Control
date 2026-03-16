@@ -1,6 +1,7 @@
 /* PROJECT: PMC (Phase 2) 
    VERSION: 0.6.1 
 */
+
 (function() {
     const HARD_VER = "0.6.1";
     const buffer = { 'index.html': '', 'code.js': '', 'style.css': '', 'manifest.js': '', 'README.md': '' };
