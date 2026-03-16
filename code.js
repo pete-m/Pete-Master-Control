@@ -2,7 +2,6 @@
    AUTHOR: Peter Maben with Gemini
    VERSION: v0.5.0
 */
-
 const buffer = { 'index.html': '', 'code.js': '', 'style.css': '', 'manifest.js': '', 'README.md': '' };
 let activeTab = 'index.html';
 let sessionPat = '';
