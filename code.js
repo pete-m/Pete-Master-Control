@@ -1,45 +1,44 @@
 /* PROJECT: PMC (Phase 2)
    AUTHOR: Peter Maben with Gemini
-   VERSION: 0.4.1
+   VERSION: 0.5.8
 */
 
 (function() {
-    const HARD_VER = "0.4.1"; 
+    const HARD_VER = "0.5.8"; 
 
     const log = (m) => {
         const el = document.getElementById('UI_LOG');
         if (el) el.innerHTML = `<div class="border-b border-zinc-900 py-1 font-mono text-[9px] uppercase tracking-tighter text-emerald-500">${m}</div>` + el.innerHTML;
     };
 
-    // 1. KILL THE "AWAITING" MESSAGE IMMEDIATELY
-    log("📡 LOGIC STREAM RECEIVED. CHECKING SYNC...");
+    // Kill the stall immediately
+    log(`📡 LOGIC LOADED. CHECKING HANDSHAKE...`);
 
-    // 2. Extract version with a fallback
-    let requestedVer = "unknown";
+    // Extract version from own URL
+    let requestedVer = "none";
     try {
         const script = document.currentScript || (function() {
             const ss = document.getElementsByTagName('script');
             return ss[ss.length - 1];
         })();
         const url = new URL(script.src, window.location.href);
-        requestedVer = url.searchParams.get('v') || "none";
-    } catch (e) {
-        log("⚠️ VERSION EXTRACTION FAILED");
-    }
+        requestedVer = url.searchParams.get('v');
+    } catch (e) { log("⚠️ VERSION READ ERROR"); }
 
-    // 3. The Protocol Check
+    // Hard Handshake
     if (requestedVer !== HARD_VER) {
-        log(`❌ SYNC ERROR: Index wants [${requestedVer}], but I am [${HARD_VER}]`);
-        // We continue anyway but warn, to avoid the 'Awaiting' stall
+        log(`❌ VERSION MISMATCH: Index sent ${requestedVer}, Logic is ${HARD_VER}`);
+        return; 
     }
 
-    // --- Core Logic ---
     const buffer = { 'index.html': '', 'code.js': '', 'style.css': '', 'manifest.js': '', 'README.md': '' };
     let activeTab = 'index.html';
     let sessionPat = '';
     let userLogin = '';
 
     window.runHandshake = async () => {
+        const btn = document.getElementById('HANDSHAKE_BTN');
+        btn.style.background = "#ea580c";
         const pat = document.getElementById('ENTRY_TOKEN').value.trim();
         log("📡 VERIFYING...");
         try {
@@ -47,14 +46,15 @@
             if (r.ok) {
                 const d = await r.json();
                 sessionPat = pat; userLogin = d.login;
-                log(`✅ SYNCED: ${d.login}`);
+                log(`✅ OK: ${d.login}`);
                 document.getElementById('PHASE_1_UI').style.opacity = "1";
                 document.getElementById('PHASE_1_UI').style.pointerEvents = "auto";
                 document.getElementById('PHASE_2_UI').style.opacity = "1";
                 document.getElementById('PHASE_2_UI').style.pointerEvents = "auto";
                 document.getElementById('VER_ID').style.color = "#10b981";
-            } else { log(`❌ AUTH FAIL: ${r.status}`); }
-        } catch (e) { log("❌ CONNECTION ERROR"); }
+            } else { log(`❌ DENIED: ${r.status}`); }
+        } catch (e) { log("❌ NO CONNECTION"); }
+        setTimeout(() => btn.style.background = "", 200);
     };
 
     window.runPush = async () => {
@@ -78,7 +78,7 @@
                 })
             });
             if (push.ok) log(`✨ ${activeTab} STABILISED.`);
-            else log(`❌ PUSH FAIL.`);
+            else log(`❌ FAIL: ${push.status}`);
         } catch (e) { log(`❌ ERROR: ${e.message}`); }
     };
 
@@ -89,5 +89,5 @@
         log(`FOCUS: ${activeTab}`);
     };
 
-    log(`ENGINE WARM. VERSION: ${HARD_VER}`);
+    log(`ENGINE WARM. SYNC VERIFIED: ${HARD_VER}`);
 })();
