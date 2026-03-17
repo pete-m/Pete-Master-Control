@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PMMC_v0.8.2.2</title>
+    <title>PMMC_v0.8.2.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .pmmc-container { @apply max-w-md mx-auto space-y-4 pb-20; }
-        .pmmc-card { @apply p-6 bg-zinc-900 border border-zinc-800 rounded-[2rem] shadow-2xl; }
+        .pmmc-card { @apply p-6 bg-zinc-900 border border-zinc-800 rounded-[2rem] shadow-2xl transition-all duration-300; }
         .pmmc-header { @apply p-8 bg-zinc-900 border-b border-zinc-800 flex justify-between items-center rounded-b-[2rem]; }
         
         .log-shell { @apply mx-4 bg-black border border-zinc-800 rounded-xl overflow-hidden transition-all duration-300 cursor-pointer; }
@@ -17,16 +17,17 @@
 
         #MAINT_MODAL { @apply fixed inset-0 bg-black/95 backdrop-blur-md z-50 hidden flex-col items-center justify-center p-8; }
         
+        /* High Contrast Black on White */
         .pmmc-input { @apply w-full bg-white border border-zinc-800 rounded-xl p-4 text-xs text-black font-mono outline-none focus:border-orange-600 transition-all; }
         .pmmc-textarea { @apply w-full h-80 bg-white border border-zinc-800 rounded-3xl p-5 text-[11px] text-black font-mono outline-none resize-none transition-all; }
-        .pmmc-textarea.lit { @apply border-emerald-500 shadow-[0_0_25px_rgba(16,185,129,0.3)]; }
-
+        
         .pmmc-btn-main { @apply w-full bg-orange-600 text-black font-black py-5 rounded-2xl uppercase text-[10px] tracking-widest active:scale-95 transition-all shadow-xl; }
         .pmmc-tab { @apply bg-zinc-950 border border-zinc-800 px-4 py-2 rounded-t-xl text-[10px] font-black uppercase text-zinc-600; }
         .pmmc-tab.active { @apply border-t-orange-600 text-orange-500 bg-zinc-900; }
         
         .pmmc-dot { @apply w-2.5 h-2.5 rounded-full bg-zinc-800 transition-all; }
         .pmmc-dot.on { @apply bg-emerald-500 shadow-[0_0_10px_#10b981]; }
+        .phase-locked { @apply opacity-25 pointer-events-none; }
     </style>
 </head>
 <body class="bg-zinc-950 text-zinc-300 font-sans p-0">
@@ -43,7 +44,7 @@
     <div class="pmmc-container">
         <header class="pmmc-header">
             <div>
-                <h1 class="text-xl font-black text-orange-600 italic tracking-tighter uppercase">PMMC v0.8.2.2</h1>
+                <h1 class="text-xl font-black text-orange-600 italic tracking-tighter uppercase">PMMC v0.8.2.4</h1>
                 <p class="text-[9px] text-zinc-600 font-bold uppercase tracking-[0.3em]">Ops Engine</p>
             </div>
             <button onclick="document.getElementById('MAINT_MODAL').style.display='flex'" class="text-[10px] font-black text-zinc-500 border border-zinc-800 px-4 py-1.5 rounded-full">MAINT</button>
@@ -51,27 +52,27 @@
 
         <div id="LOG_SHELL" onclick="window.toggleLog()" class="log-shell shut">
             <div id="UI_LOG">
-                <div class="log-line text-orange-500">[System] PMMC v0.8.2.2 Online...</div>
+                <div class="log-line text-orange-500">[System] PMMC v0.8.2.4 Standby...</div>
             </div>
         </div>
 
         <div class="px-4 space-y-4">
-            <section class="pmmc-card">
-                <span class="text-[10px] font-black text-orange-600 uppercase mb-2 block italic">01 // Auth Handshake</span>
-                <input type="password" id="ENTRY_TOKEN" oninput="window.silentHandshake()" placeholder="Handshake Token..." class="pmmc-input">
+            <section id="PHASE_0_UI" class="pmmc-card">
+                <span class="text-[10px] font-black text-orange-600 uppercase mb-2 block italic">01 // Auth</span>
+                <input type="password" id="ENTRY_TOKEN" oninput="window.silentHandshake()" placeholder="Token..." class="pmmc-input">
             </section>
 
-            <section id="PHASE_1_UI" class="pmmc-card opacity-30 pointer-events-none transition-all">
-                <span class="text-[10px] font-black text-zinc-500 uppercase mb-2 block italic">02 // Repo Anchor</span>
+            <section id="PHASE_1_UI" class="pmmc-card phase-locked">
+                <span class="text-[10px] font-black text-zinc-500 uppercase mb-2 block italic">02 // Repo Anchor (Nominate/New)</span>
                 <div class="flex gap-2">
-                    <input type="text" id="INIT_REPO_NAME" placeholder="Repo Name..." class="pmmc-input">
-                    <button onclick="window.runInit()" class="bg-zinc-800 text-white font-black px-6 rounded-xl text-[10px] uppercase">Init</button>
+                    <input type="text" id="INIT_REPO_NAME" placeholder="Target Repo..." class="pmmc-input">
+                    <button onclick="window.runInit()" class="bg-zinc-800 text-white font-black px-6 rounded-xl text-[10px] uppercase">Anchor</button>
                 </div>
             </section>
 
-            <section id="PHASE_2_UI" class="space-y-3 opacity-30 pointer-events-none transition-all">
+            <section id="PHASE_2_UI" class="pmmc-card phase-locked space-y-3">
                 <div class="flex justify-between items-end border-b border-zinc-900 pb-2">
-                    <h2 class="text-[11px] font-black text-orange-600 uppercase italic">03 // Asset Fitter</h2>
+                    <h2 id="REPO_DISPLAY" class="text-[11px] font-black text-orange-600 uppercase italic">03 // Asset Fitter</h2>
                     <div class="flex gap-2">
                         <div id="stat-index.html" class="pmmc-dot"></div>
                         <div id="stat-code.js" class="pmmc-dot"></div>
@@ -89,7 +90,7 @@
                     <button id="tab-README.md" onclick="window.switchTab('tab-README.md')" class="pmmc-tab">MD</button>
                 </div>
 
-                <textarea id="MAIN_TEXT" class="pmmc-textarea" placeholder="Input Asset Data..."></textarea>
+                <textarea id="MAIN_TEXT" class="pmmc-textarea" placeholder="Asset Content..."></textarea>
                 <button onclick="window.runPush()" class="pmmc-btn-main">Commission Asset</button>
             </section>
         </div>
@@ -97,7 +98,7 @@
 
     <script>
         window.addEventListener('load', () => {
-            const v = "0.8.2.2";
+            const v = "0.8.2.4";
             fetch('./code.js?v=' + v + '&t=' + Date.now()).then(r => r.text()).then(c => {
                 const s = document.createElement('script');
                 s.textContent = c;
@@ -107,3 +108,4 @@
     </script>
 </body>
 </html>
+
