@@ -1,126 +1,119 @@
-/* PROJECT: PMC (Phase 2) | VERSION: 0.7.6 */
+/* PROJECT: PMC | VERSION: 0.8.1 */
 (function() {
-    const HARD_VER = "0.7.6";
+    const HARD_VER = "0.8.1";
     const files = ['index.html', 'code.js', 'style.css', 'manifest.js', 'README.md'];
     let buffer = { 'index.html': '', 'code.js': '', 'style.css': '', 'manifest.js': '', 'README.md': '' };
-    let sessionPat = '', userLogin = '', activeTab = 'index.html', isVerifying = false;
+    let sessionPat = '', userLogin = '', activeTab = 'index.html', currentRepo = '';
 
     const log = (m) => {
         const el = document.getElementById('UI_LOG');
-        if (el) el.innerHTML = `<div class="log-entry">${m}</div>` + el.innerHTML;
+        const entry = document.createElement('div');
+        entry.className = 'log-line';
+        entry.textContent = `> ${m}`;
+        el.prepend(entry);
     };
 
-    window.runRestart = () => {
-        buffer = { 'index.html': '', 'code.js': '', 'style.css': '', 'manifest.js': '', 'README.md': '' };
-        activeTab = 'index.html';
-        document.getElementById('INIT_REPO_NAME').value = '';
-        document.getElementById('ENTRY_REPO').value = '';
-        document.getElementById('MAIN_TEXT').value = '';
-        files.forEach(f => {
-            const dot = document.getElementById(`stat-${f}`);
-            if(dot) { dot.style.backgroundColor = ""; dot.style.boxShadow = "none"; }
-        });
-        window.switchTab('tab-index.html');
-        log("🔄 PROJECT RESTARTED.");
-    };
-
-    window.jsonifyManifest = () => {
-        const raw = document.getElementById('MAIN_TEXT').value;
-        if (!raw.includes(',')) return log("⚠️ NO COMMAS DETECTED.");
-        const list = raw.split(',').map(item => item.trim()).filter(item => item);
-        const json = JSON.stringify({ 
-            project: "Navigator_Build", 
-            timestamp: new Date().toISOString(),
-            assets: list 
-        }, null, 4);
-        document.getElementById('MAIN_TEXT').value = json;
-        log("✨ CSV CONVERTED TO MANIFEST.");
-    };
-
-    const updateAssetUI = async (repoPath) => {
-        for (const f of files) {
-            try {
-                const r = await fetch(`https://api.github.com/repos/${repoPath}/contents/${f}`, {
-                    headers: { 'Authorization': `token ${sessionPat}` }
-                });
-                const dot = document.getElementById(`stat-${f}`);
-                if (dot) {
-                    dot.style.backgroundColor = r.ok ? "#10b981" : "#27272a";
-                    dot.style.boxShadow = r.ok ? "0 0 8px #10b981" : "none";
-                }
-            } catch (e) {}
-        }
+    window.toggleLog = () => {
+        const shell = document.getElementById('LOG_SHELL');
+        shell.classList.toggle('open');
+        shell.classList.toggle('shut');
     };
 
     window.silentHandshake = async () => {
         const pat = document.getElementById('ENTRY_TOKEN').value.trim();
-        if (pat.length < 40 || isVerifying) return;
-        isVerifying = true;
-        log("📡 HANDSHAKING...");
+        if (pat.length < 40) return;
+        log("INITIATING AUTH...");
         try {
             const r = await fetch('https://api.github.com/user', { headers: { 'Authorization': `token ${pat}` } });
             if (r.ok) {
                 const d = await r.json();
                 sessionPat = pat; userLogin = d.login;
-                log(`✅ AUTH: ${d.login}`);
+                log(`AUTH SECURED: ${d.login.toUpperCase()}`);
                 ['PHASE_1_UI', 'PHASE_2_UI'].forEach(id => {
                     const el = document.getElementById(id);
-                    if(el) { el.style.opacity = "1"; el.style.pointerEvents = "auto"; }
+                    el.style.opacity = "1"; el.style.pointerEvents = "auto";
                 });
-                document.getElementById('VER_ID').style.color = "#10b981";
             }
-        } catch (e) {}
-        isVerifying = false;
+        } catch (e) { log("AUTH FAILURE"); }
     };
 
     window.runInit = async () => {
-        const repoName = document.getElementById('INIT_REPO_NAME').value.trim();
-        log(`📂 INITIALISING [${repoName}]...`);
+        const name = document.getElementById('INIT_REPO_NAME').value.trim();
+        if(!name) return;
+        log(`ANCHORING REPO: ${name}...`);
         try {
             const r = await fetch('https://api.github.com/user/repos', {
                 method: 'POST',
                 headers: { 'Authorization': `token ${sessionPat}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: repoName, auto_init: true })
+                body: JSON.stringify({ name, auto_init: true })
             });
-            if (r.ok) {
-                log(`✨ REPO CREATED.`);
-                const path = `${userLogin}/${repoName}`;
-                document.getElementById('ENTRY_REPO').value = path;
-                updateAssetUI(path);
+            if (r.ok || r.status === 422) {
+                currentRepo = name;
+                log(`REPO STABILISED: ${name}`);
+                updateAssetUI();
             }
-        } catch (e) {}
+        } catch (e) { log("INIT ERROR"); }
     };
 
     window.runPush = async () => {
-        const repo = document.getElementById('ENTRY_REPO').value.trim();
         const content = document.getElementById('MAIN_TEXT').value;
-        log(`🚀 COMMISSIONING: ${activeTab}...`);
+        if(!currentRepo || !content) return log("DATA MISSING");
+        log(`COMMISSIONING: ${activeTab}...`);
         try {
-            const path = repo.includes('/') ? repo : `${userLogin}/${repo}`;
-            const res = await fetch(`https://api.github.com/repos/${path}/contents/${activeTab}`, {
+            const res = await fetch(`https://api.github.com/repos/${userLogin}/${currentRepo}/contents/${activeTab}`, {
                 headers: { 'Authorization': `token ${sessionPat}` }
             });
             const sha = res.ok ? (await res.json()).sha : null;
-            const push = await fetch(`https://api.github.com/repos/${path}/contents/${activeTab}`, {
+            const push = await fetch(`https://api.github.com/repos/${userLogin}/${currentRepo}/contents/${activeTab}`, {
                 method: 'PUT',
                 headers: { 'Authorization': `token ${sessionPat}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: "PMC_Sync", content: btoa(unescape(encodeURIComponent(content))), sha: sha })
+                body: JSON.stringify({ message: "PMC_Sync", content: btoa(unescape(encodeURIComponent(content))), sha })
             });
-            if (push.ok) { log(`✨ ${activeTab} STABILISED.`); updateAssetUI(path); }
-        } catch (e) {}
+            if (push.ok) {
+                log(`ASSET SECURED: ${activeTab}`);
+                const tx = document.getElementById('MAIN_TEXT');
+                tx.classList.add('lit');
+                setTimeout(() => tx.classList.remove('lit'), 2000);
+                updateAssetUI();
+            }
+        } catch (e) { log("PUSH FAILED"); }
     };
 
+    window.invokeYAML = async () => {
+        if (!currentRepo) return log("❌ NO REPO ANCHORED");
+        log(`📡 DISPATCHING YAML: ${currentRepo}`);
+        try {
+            const r = await fetch(`https://api.github.com/repos/${userLogin}/${currentRepo}/dispatches`, {
+                method: 'POST',
+                headers: { 'Authorization': `token ${sessionPat}`, 'Accept': 'application/vnd.github.v3+json' },
+                body: JSON.stringify({ event_type: "pmc_maintenance_trigger" })
+            });
+            if (r.ok || r.status === 204) log("✅ YAML WORKFLOW TRIGGERED");
+        } catch (e) { log("❌ DISPATCH ERROR"); }
+    };
+
+    window.clearRepos = () => { currentRepo = ''; log("REPO ANCHOR RELEASED"); document.getElementById('MAINT_MODAL').style.display = 'none'; };
+    window.clearCommits = () => { log("COMMITS RESET REQUESTED"); document.getElementById('MAINT_MODAL').style.display = 'none'; };
+    window.purgeTab = () => { document.getElementById('MAIN_TEXT').value = ""; buffer[activeTab] = ""; log("TAB WIPED"); };
+    
     window.switchTab = (t) => {
         buffer[activeTab] = document.getElementById('MAIN_TEXT').value;
         document.querySelectorAll('.pmc-tab').forEach(b => b.classList.remove('active'));
         document.getElementById(t).classList.add('active');
         activeTab = t.replace('tab-', '');
         document.getElementById('MAIN_TEXT').value = buffer[activeTab];
-        const mTools = document.getElementById('MANIFEST_TOOLS');
-        if (activeTab === 'manifest.js') { mTools.classList.remove('hidden'); } 
-        else { mTools.classList.add('hidden'); }
         log(`FOCUS: ${activeTab}`);
     };
 
-    log(`ENGINE_WARM. v${HARD_VER} SYNCED.`);
+    const updateAssetUI = async () => {
+        for (const f of files) {
+            const r = await fetch(`https://api.github.com/repos/${userLogin}/${currentRepo}/contents/${f}`, {
+                headers: { 'Authorization': `token ${sessionPat}` }
+            });
+            const dot = document.getElementById(`stat-${f}`);
+            if (dot) dot.className = r.ok ? 'pmc-dot on' : 'pmc-dot';
+        }
+    };
+
+    log(`OPS ENGINE v${HARD_VER} ONLINE.`);
 })();
