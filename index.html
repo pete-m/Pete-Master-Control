@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PMMC_v0.8.2</title>
+    <title>PMMC_v0.8.2.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .pmmc-container { @apply max-w-md mx-auto space-y-4 pb-20; }
@@ -17,8 +17,8 @@
 
         #MAINT_MODAL { @apply fixed inset-0 bg-black/95 backdrop-blur-md z-50 hidden flex-col items-center justify-center p-8; }
         
-        .pmmc-input { @apply w-full bg-black border border-zinc-800 rounded-xl p-4 text-xs text-orange-500 font-mono outline-none focus:border-orange-600 transition-all; }
-        .pmmc-textarea { @apply w-full h-80 bg-zinc-950 border border-zinc-800 rounded-3xl p-5 text-[11px] font-mono outline-none resize-none transition-all; }
+        .pmmc-input { @apply w-full bg-white border border-zinc-800 rounded-xl p-4 text-xs text-black font-mono outline-none focus:border-orange-600 transition-all; }
+        .pmmc-textarea { @apply w-full h-80 bg-white border border-zinc-800 rounded-3xl p-5 text-[11px] text-black font-mono outline-none resize-none transition-all; }
         .pmmc-textarea.lit { @apply border-emerald-500 shadow-[0_0_25px_rgba(16,185,129,0.3)]; }
 
         .pmmc-btn-main { @apply w-full bg-orange-600 text-black font-black py-5 rounded-2xl uppercase text-[10px] tracking-widest active:scale-95 transition-all shadow-xl; }
@@ -35,10 +35,7 @@
         <div class="pmmc-card w-full max-w-xs space-y-4 border-orange-600/40">
             <h3 class="text-orange-500 font-black uppercase italic tracking-[0.2em] text-center text-[10px] mb-4">PMMC Maintenance</h3>
             <button onclick="window.invokeYAML()" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl uppercase text-[10px] tracking-widest shadow-lg active:scale-95 transition-all">Invoke PMMC_Ops</button>
-            <div class="grid grid-cols-1 gap-2">
-                <button onclick="window.clearRepos()" class="w-full bg-zinc-800 text-orange-500 font-bold py-3 rounded-lg uppercase text-[9px] border border-zinc-700">Clear Repos</button>
-                <button onclick="window.clearCommits()" class="w-full bg-zinc-800 text-red-500 font-bold py-3 rounded-lg uppercase text-[9px] border border-zinc-700">Clear Commits</button>
-            </div>
+            <button onclick="window.clearRepos()" class="w-full bg-zinc-800 text-orange-500 font-bold py-3 rounded-lg uppercase text-[9px] border border-zinc-700">Clear Repo Anchor</button>
             <button onclick="document.getElementById('MAINT_MODAL').style.display='none'" class="w-full text-[10px] text-zinc-600 uppercase font-black py-4">Close Console</button>
         </div>
     </div>
@@ -46,7 +43,7 @@
     <div class="pmmc-container">
         <header class="pmmc-header">
             <div>
-                <h1 class="text-xl font-black text-orange-600 italic tracking-tighter uppercase">PMMC v0.8.2</h1>
+                <h1 class="text-xl font-black text-orange-600 italic tracking-tighter uppercase">PMMC v0.8.2.2</h1>
                 <p class="text-[9px] text-zinc-600 font-bold uppercase tracking-[0.3em]">Ops Engine</p>
             </div>
             <button onclick="document.getElementById('MAINT_MODAL').style.display='flex'" class="text-[10px] font-black text-zinc-500 border border-zinc-800 px-4 py-1.5 rounded-full">MAINT</button>
@@ -54,17 +51,17 @@
 
         <div id="LOG_SHELL" onclick="window.toggleLog()" class="log-shell shut">
             <div id="UI_LOG">
-                <div class="log-line text-orange-500">[System] PMMC v0.8.2 Initialised...</div>
+                <div class="log-line text-orange-500">[System] PMMC v0.8.2.2 Online...</div>
             </div>
         </div>
 
         <div class="px-4 space-y-4">
             <section class="pmmc-card">
                 <span class="text-[10px] font-black text-orange-600 uppercase mb-2 block italic">01 // Auth Handshake</span>
-                <input type="password" id="ENTRY_TOKEN" oninput="window.silentHandshake()" placeholder="••••••••••••" class="pmmc-input">
+                <input type="password" id="ENTRY_TOKEN" oninput="window.silentHandshake()" placeholder="Handshake Token..." class="pmmc-input">
             </section>
 
-            <section id="PHASE_1_UI" class="pmmc-card opacity-30 pointer-events-none transition-all duration-700">
+            <section id="PHASE_1_UI" class="pmmc-card opacity-30 pointer-events-none transition-all">
                 <span class="text-[10px] font-black text-zinc-500 uppercase mb-2 block italic">02 // Repo Anchor</span>
                 <div class="flex gap-2">
                     <input type="text" id="INIT_REPO_NAME" placeholder="Repo Name..." class="pmmc-input">
@@ -72,7 +69,7 @@
                 </div>
             </section>
 
-            <section id="PHASE_2_UI" class="space-y-3 opacity-30 pointer-events-none transition-all duration-700">
+            <section id="PHASE_2_UI" class="space-y-3 opacity-30 pointer-events-none transition-all">
                 <div class="flex justify-between items-end border-b border-zinc-900 pb-2">
                     <h2 class="text-[11px] font-black text-orange-600 uppercase italic">03 // Asset Fitter</h2>
                     <div class="flex gap-2">
@@ -92,19 +89,15 @@
                     <button id="tab-README.md" onclick="window.switchTab('tab-README.md')" class="pmmc-tab">MD</button>
                 </div>
 
-                <div class="relative">
-                    <button onclick="window.purgeTab()" class="absolute top-[-30px] right-0 text-[9px] font-black text-zinc-700 uppercase">[ Purge ]</button>
-                    <textarea id="MAIN_TEXT" class="pmmc-textarea" placeholder="Paste asset data..."></textarea>
-                </div>
-
-                <button onclick="window.runPush()" class="pmmc-btn-main shadow-[0_0_20px_rgba(234,88,12,0.15)]">Commission Asset</button>
+                <textarea id="MAIN_TEXT" class="pmmc-textarea" placeholder="Input Asset Data..."></textarea>
+                <button onclick="window.runPush()" class="pmmc-btn-main">Commission Asset</button>
             </section>
         </div>
     </div>
 
     <script>
         window.addEventListener('load', () => {
-            const v = "0.8.2";
+            const v = "0.8.2.2";
             fetch('./code.js?v=' + v + '&t=' + Date.now()).then(r => r.text()).then(c => {
                 const s = document.createElement('script');
                 s.textContent = c;
