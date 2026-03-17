@@ -27,6 +27,7 @@
         .pmmc-dot { @apply w-2.5 h-2.5 rounded-full bg-zinc-800 transition-all; }
         .pmmc-dot.on { @apply bg-emerald-500 shadow-[0_0_10px_#10b981]; }
         .phase-locked { @apply opacity-25 pointer-events-none; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body class="bg-zinc-950 text-zinc-300 font-sans p-0">
@@ -95,21 +96,15 @@
 
                 <textarea id="MAIN_TEXT" class="pmmc-textarea" placeholder="Asset Content..."></textarea>
                 <button onclick="window.runPush()" class="pmmc-btn-main">Commission Asset</button>
+
+                <div id="DEPLOY_LINK_WRAPPER" class="hidden mt-4 p-4 bg-black border border-zinc-800 rounded-2xl text-center">
+                    <p class="text-[8px] text-zinc-600 uppercase font-black mb-1">Live Hub URL</p>
+                    <a id="DEPLOY_URL" href="#" target="_blank" class="text-orange-500 font-mono text-[10px] break-all hover:underline"></a>
+                </div>
             </section>
         </div>
     </div>
 
-    <script>
-        window.addEventListener('load', () => {
-            const v = "0.8.2.5";
-            fetch('./code.js?v=' + v + '&t=' + Date.now()).then(r => r.text()).then(c => {
-                const s = document.createElement('script');
-                s.textContent = c;
-                document.body.appendChild(s);
-            });
-        });
-    </script>
+    <script src="code.js?v=0.8.2.5"></script>
 </body>
 </html>
-
-
