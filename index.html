@@ -1,123 +1,81 @@
-/* PROJECT: PMMC | VERSION: 0.8.2.5 | STATUS: DUAL-ANCHOR STABLE */
-(function() {
-    const files = ['index.html', 'code.js', 'style.css', 'manifest.js', 'README.md'];
-    let buffer = { 'index.html': '', 'code.js': '', 'style.css': '', 'manifest.js': '', 'README.md': '' };
-    let sessionPat = '', userLogin = '', activeTab = 'index.html';
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PMMC_v0.8.2.5</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .pmmc-container { @apply max-w-md mx-auto space-y-4 pb-20; }
+        .pmmc-card { @apply p-6 bg-zinc-900 border border-zinc-800 rounded-[2rem] shadow-2xl transition-all; }
+        .pmmc-header { @apply p-8 bg-zinc-900 border-b border-zinc-800 flex justify-between items-center rounded-b-[2rem]; }
+        .log-shell { @apply mx-4 bg-black border border-zinc-800 rounded-xl overflow-hidden transition-all duration-300 cursor-pointer h-10; }
+        .log-shell.open { @apply h-40 overflow-y-auto; }
+        .log-line { @apply p-2 font-mono text-[10px] uppercase text-emerald-500 border-b border-zinc-900 last:border-0; }
+        .pmmc-input { @apply w-full bg-white border border-zinc-800 rounded-xl p-4 text-xs text-black font-mono outline-none focus:border-orange-600 transition-all; }
+        .pmmc-textarea { @apply w-full h-80 bg-white border border-zinc-800 rounded-3xl p-5 text-[11px] text-black font-mono outline-none resize-none transition-all; }
+        .pmmc-btn-main { @apply w-full bg-orange-600 text-black font-black py-5 rounded-2xl uppercase text-[10px] tracking-widest active:scale-95 transition-all shadow-xl; }
+        .pmmc-tab { @apply bg-zinc-950 border border-zinc-800 px-3 py-2 rounded-t-xl text-[9px] font-black uppercase text-zinc-600 cursor-pointer; }
+        .pmmc-tab.active { @apply border-t-orange-600 text-orange-500 bg-zinc-900; }
+        .pmmc-dot { @apply w-2 h-2 rounded-full bg-zinc-800 transition-all; }
+        .pmmc-dot.on { @apply bg-emerald-500 shadow-[0_0_8px_#10b981]; }
+        .phase-locked { @apply opacity-25 pointer-events-none; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-zinc-950 text-zinc-300 font-sans p-0">
 
-    const log = (m) => {
-        const el = document.getElementById('UI_LOG');
-        if (!el) return;
-        const entry = document.createElement('div');
-        entry.className = 'log-line';
-        entry.textContent = `> ${m}`;
-        el.prepend(entry);
-    };
+    <div class="pmmc-container">
+        <header class="pmmc-header">
+            <div>
+                <h1 class="text-xl font-black text-orange-600 italic uppercase">PMMC v0.8.2.5</h1>
+                <p class="text-[9px] text-zinc-600 font-bold uppercase tracking-[0.3em]">Ops Engine</p>
+            </div>
+        </header>
 
-    window.toggleLog = () => document.getElementById('LOG_SHELL').classList.toggle('open');
+        <div id="LOG_SHELL" onclick="window.toggleLog()" class="log-shell">
+            <div id="UI_LOG"></div>
+        </div>
 
-    const buildUI = () => {
-        const tabs = document.getElementById('TAB_CONTAINER');
-        const dots = document.getElementById('DOT_CONTAINER');
-        if (!tabs || !dots) return;
-        tabs.innerHTML = ''; dots.innerHTML = '';
-        files.forEach(f => {
-            tabs.innerHTML += `<button id="tab-${f}" onclick="window.switchTab('tab-${f}')" class="pmmc-tab ${f === activeTab ? 'active' : ''}">${f.split('.')[0].toUpperCase()}</button>`;
-            dots.innerHTML += `<div id="stat-${f}" class="pmmc-dot"></div>`;
-        });
-    };
+        <div class="px-4 space-y-4">
+            <section id="PHASE_0_UI" class="pmmc-card">
+                <span class="text-[10px] font-black text-orange-600 uppercase mb-2 block italic text-center">01 // Auth Handshake</span>
+                <input type="password" id="ENTRY_TOKEN" oninput="window.silentHandshake()" placeholder="Handshake Token..." class="pmmc-input text-center">
+            </section>
 
-    window.silentHandshake = async () => {
-        const pat = document.getElementById('ENTRY_TOKEN').value.trim();
-        if (pat.length < 40) return;
-        try {
-            const r = await fetch('https://api.github.com/user', { headers: { 'Authorization': `token ${pat}` } });
-            if (r.ok) {
-                const d = await r.json();
-                sessionPat = pat; userLogin = d.login;
-                log(`PMMC_AUTH: ${d.login.toUpperCase()} ONLINE`);
-                document.getElementById('PHASE_1_UI').classList.remove('phase-locked');
-                document.getElementById('PHASE_2_UI').classList.remove('phase-locked');
-                buildUI();
-                files.forEach(f => {
-                    const saved = localStorage.getItem(`pmmc_v0.8.2.5_${f}`);
-                    if (saved) buffer[f] = saved;
-                });
-                document.getElementById('MAIN_TEXT').value = buffer[activeTab] || "";
-            } else {
-                log("AUTH ERROR: INVALID TOKEN");
-            }
-        } catch (e) { log("AUTH ERROR: CONNECTION FAILED"); }
-    };
+            <section id="PHASE_2_UI" class="pmmc-card phase-locked">
+                <span class="text-[10px] font-black text-zinc-500 uppercase mb-2 block italic text-center">02 // Asset Workbench</span>
+                <div class="flex gap-2 mb-4">
+                    <input type="text" id="TARGET_REPO_NAME" placeholder="Nominate Repo..." class="pmmc-input">
+                    <button onclick="window.updateAssetUI()" class="bg-zinc-800 text-white font-black px-4 rounded-xl text-[10px] uppercase">Sync</button>
+                </div>
 
-    window.runInit = async () => {
-        const name = document.getElementById('NEW_REPO_NAME').value.trim();
-        if(!name) return;
-        log(`🔨 BUILDING [${name}]`);
-        try {
-            const r = await fetch('https://api.github.com/user/repos', {
-                method: 'POST',
-                headers: { 'Authorization': `token ${sessionPat}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, auto_init: true })
-            });
-            if (r.ok || r.status === 422) {
-                log(`✅ SUCCESS: ${name}`);
-                document.getElementById('TARGET_REPO_NAME').value = name;
-                window.updateAssetUI();
-            }
-        } catch (e) { log("INIT ERROR"); }
-    };
+                <div class="flex justify-between items-center border-t border-zinc-800 pt-4 mb-3">
+                    <div class="flex gap-1 overflow-x-auto no-scrollbar">
+                        <button id="tab-index.html" onclick="window.switchTab('tab-index.html')" class="pmmc-tab active">HTML</button>
+                        <button id="tab-code.js" onclick="window.switchTab('tab-code.js')" class="pmmc-tab">JS</button>
+                        <button id="tab-style.css" onclick="window.switchTab('tab-style.css')" class="pmmc-tab">CSS</button>
+                        <button id="tab-manifest.js" onclick="window.switchTab('tab-manifest.js')" class="pmmc-tab">JSON</button>
+                        <button id="tab-README.md" onclick="window.switchTab('tab-README.md')" class="pmmc-tab">MD</button>
+                    </div>
+                    <div class="flex gap-1">
+                        <div id="stat-index.html" class="pmmc-dot"></div>
+                        <div id="stat-code.js" class="pmmc-dot"></div>
+                        <div id="stat-style.css" class="pmmc-dot"></div>
+                        <div id="stat-manifest.js" class="pmmc-dot"></div>
+                        <div id="stat-README.md" class="pmmc-dot"></div>
+                    </div>
+                </div>
 
-    window.runPush = async () => {
-        const targetRepo = document.getElementById('TARGET_REPO_NAME').value.trim();
-        const content = document.getElementById('MAIN_TEXT').value;
-        if(!targetRepo || !content.trim()) return log("⚠️ EMPTY BUFFER");
-        try {
-            const res = await fetch(`https://api.github.com/repos/${userLogin}/${targetRepo}/contents/${activeTab}`, {
-                headers: { 'Authorization': `token ${sessionPat}` }
-            });
-            const sha = res.ok ? (await res.json()).sha : null;
-            const push = await fetch(`https://api.github.com/repos/${userLogin}/${targetRepo}/contents/${activeTab}`, {
-                method: 'PUT',
-                headers: { 'Authorization': `token ${sessionPat}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: "PMMC_Sync", content: btoa(unescape(encodeURIComponent(content))), sha })
-            });
-            if (push.ok) {
-                log(`💎 SECURED: ${activeTab.toUpperCase()}`);
-                const url = `https://${userLogin}.github.io/${targetRepo}/`;
-                document.getElementById('DEPLOY_URL').textContent = url;
-                document.getElementById('DEPLOY_URL').href = url;
-                document.getElementById('DEPLOY_LINK_WRAPPER').classList.remove('hidden');
-                window.updateAssetUI();
-            }
-        } catch (e) { log("PUSH ERROR"); }
-    };
-
-    window.switchTab = (tId) => {
-        buffer[activeTab] = document.getElementById('MAIN_TEXT').value;
-        localStorage.setItem(`pmmc_v0.8.2.5_${activeTab}`, buffer[activeTab]);
-        activeTab = tId.replace('tab-', '');
-        buildUI();
-        document.getElementById('MAIN_TEXT').value = buffer[activeTab] || "";
-        log(`📂 SWAP: ${activeTab.toUpperCase()}`);
-    };
-
-    window.updateAssetUI = async () => {
-        const target = document.getElementById('TARGET_REPO_NAME').value.trim();
-        if (!target) return;
-        for (const f of files) {
-            const r = await fetch(`https://api.github.com/repos/${userLogin}/${target}/contents/${f}`, {
-                headers: { 'Authorization': `token ${sessionPat}` }
-            });
-            const dot = document.getElementById(`stat-${f}`);
-            if (dot) dot.className = r.ok ? 'pmmc-dot on' : 'pmmc-dot';
-        }
-    };
-
-    window.invokeYAML = () => log("SIGNAL SENT");
-    window.clearRepos = () => { location.reload(); };
-
-    window.onload = () => {
-        log(`PMMC_OPS_ENGINE v0.8.2.5 ONLINE.`);
-    };
-})();
-            
+                <textarea id="MAIN_TEXT" class="pmmc-textarea" placeholder="Asset Content..."></textarea>
+                <button onclick="window.runPush()" class="pmmc-btn-main">Commission Asset</button>
+                
+                <div id="DEPLOY_LINK_WRAPPER" class="hidden mt-4 p-4 bg-black border border-zinc-800 rounded-2xl text-center">
+                    <a id="DEPLOY_URL" href="#" target="_blank" class="text-orange-500 font-mono text-[9px] break-all hover:underline"></a>
+                </div>
+            </section>
+        </div>
+    </div>
+    <script src="code.js?v=0.8.2.5"></script>
+</body>
+</html>
