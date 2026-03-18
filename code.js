@@ -6,17 +6,14 @@
 
     const log = (m) => {
         const el = document.getElementById('UI_LOG');
+        if (!el) return;
         const entry = document.createElement('div');
         entry.className = 'log-line';
         entry.textContent = `> ${m}`;
         el.prepend(entry);
     };
 
-    window.toggleLog = () => {
-        const shell = document.getElementById('LOG_SHELL');
-        shell.classList.toggle('open');
-        shell.classList.toggle('shut');
-    };
+    window.toggleLog = () => document.getElementById('LOG_SHELL').classList.toggle('open');
 
     window.silentHandshake = async () => {
         const pat = document.getElementById('ENTRY_TOKEN').value.trim();
@@ -27,49 +24,20 @@
                 const d = await r.json();
                 sessionPat = pat; userLogin = d.login;
                 log(`PMMC_AUTH: ${d.login.toUpperCase()} ONLINE`);
-                document.getElementById('PHASE_1_UI').classList.remove('phase-locked');
                 document.getElementById('PHASE_2_UI').classList.remove('phase-locked');
-                
                 files.forEach(f => {
                     const saved = localStorage.getItem(`pmmc_v0.8.2.5_${f}`);
                     if (saved) buffer[f] = saved;
                 });
-                if (buffer[activeTab]) document.getElementById('MAIN_TEXT').value = buffer[activeTab];
+                document.getElementById('MAIN_TEXT').value = buffer[activeTab] || "";
             }
-        } catch (e) { log("PMMC_AUTH: ERROR"); }
-    };
-
-    window.runInit = async () => {
-        const name = document.getElementById('NEW_REPO_NAME').value.trim();
-        if(!name) return;
-        log(`🔨 FACTORY: BUILDING [${name}]`);
-        try {
-            const r = await fetch('https://api.github.com/user/repos', {
-                method: 'POST',
-                headers: { 'Authorization': `token ${sessionPat}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, auto_init: true })
-            });
-            if (r.ok || r.status === 422) {
-                log(`✅ BUILD COMPLETE: ${name}`);
-                document.getElementById('TARGET_REPO_NAME').value = name;
-                
-                const yaml = `name: PMMC_Ops\non:\n  repository_dispatch:\n    types: [pmmc_maintenance_trigger]\njobs:\n  ops:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo "PMMC_OPS_ACTIVE"`;
-                await fetch(`https://api.github.com/repos/${userLogin}/${name}/contents/.github/workflows/pmmc-ops.yml`, {
-                    method: 'PUT',
-                    headers: { 'Authorization': `token ${sessionPat}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: "PMMC_System_Init", content: btoa(unescape(encodeURIComponent(yaml))) })
-                });
-                window.updateAssetUI();
-            }
-        } catch (e) { log("❌ FACTORY: ERROR"); }
+        } catch (e) { log("AUTH ERROR"); }
     };
 
     window.runPush = async () => {
         const targetRepo = document.getElementById('TARGET_REPO_NAME').value.trim();
         const content = document.getElementById('MAIN_TEXT').value;
-        if(!targetRepo || !content.trim()) return log(`⚠️ BYPASS: ${activeTab.toUpperCase()} IS EMPTY`);
-        
-        log(`📡 COMMISSIONING: ${activeTab.toUpperCase()} -> ${targetRepo}`);
+        if(!targetRepo || !content.trim()) return log(`⚠️ BYPASS: ${activeTab.toUpperCase()} EMPTY`);
         try {
             const res = await fetch(`https://api.github.com/repos/${userLogin}/${targetRepo}/contents/${activeTab}`, {
                 headers: { 'Authorization': `token ${sessionPat}` }
@@ -82,30 +50,44 @@
             });
             if (push.ok) {
                 log(`💎 SECURED: ${activeTab.toUpperCase()}`);
-                window.updateAssetUI();
-                
                 const url = `https://${userLogin}.github.io/${targetRepo}/`;
-                const wrapper = document.getElementById('DEPLOY_LINK_WRAPPER');
-                const link = document.getElementById('DEPLOY_URL');
-                if (wrapper && link) {
-                    link.href = url;
-                    link.textContent = url;
-                    wrapper.classList.remove('hidden');
-                }
+                const dUrl = document.getElementById('DEPLOY_URL');
+                dUrl.textContent = url; dUrl.href = url;
+                document.getElementById('DEPLOY_LINK_WRAPPER').classList.remove('hidden');
+                window.updateAssetUI();
             }
-        } catch (e) { log("❌ PUSH ERROR"); }
+        } catch (e) { log("PUSH ERROR"); }
     };
 
     window.switchTab = (tId) => {
         buffer[activeTab] = document.getElementById('MAIN_TEXT').value;
         localStorage.setItem(`pmmc_v0.8.2.5_${activeTab}`, buffer[activeTab]);
-
+        
         document.querySelectorAll('.pmmc-tab').forEach(b => b.classList.remove('active'));
         document.getElementById(tId).classList.add('active');
-        activeTab = tId.replace('tab-', '');
         
+        activeTab = tId.replace('tab-', '');
         document.getElementById('MAIN_TEXT').value = buffer[activeTab] || "";
         log(`📂 SWAP: ${activeTab.toUpperCase()}`);
+    };
+
+    window.updateAssetUI = async () => {
+        const target = document.getElementById('TARGET_REPO_NAME').value.trim();
+        if (!target) return;
+        for (const f of files) {
+            const r = await fetch(`https://api.github.com/repos/${userLogin}/${target}/contents/${f}`, {
+                headers: { 'Authorization': `token ${sessionPat}` }
+            });
+            const dot = document.getElementById(`stat-${f}`);
+            if (dot) dot.className = r.ok ? 'pmmc-dot on' : 'pmmc-dot';
+        }
+    };
+
+    // INIT
+    document.addEventListener('DOMContentLoaded', () => {
+        log(`PMMC_OPS_ENGINE v0.8.2.5 ONLINE.`);
+    });
+})();
         document.getElementById('MAIN_TEXT').focus();
     };
 
