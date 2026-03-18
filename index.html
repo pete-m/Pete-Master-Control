@@ -2,80 +2,55 @@
 <html lang="en-GB">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PMMC_v0.8.2.5</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PMC_v0.8.2.5_BASELINE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .pmmc-container { @apply max-w-md mx-auto space-y-4 pb-20; }
-        .pmmc-card { @apply p-6 bg-zinc-900 border border-zinc-800 rounded-[2rem] shadow-2xl transition-all; }
-        .pmmc-header { @apply p-8 bg-zinc-900 border-b border-zinc-800 flex justify-between items-center rounded-b-[2rem]; }
-        .log-shell { @apply mx-4 bg-black border border-zinc-800 rounded-xl overflow-hidden transition-all duration-300 cursor-pointer h-10; }
-        .log-shell.open { @apply h-40 overflow-y-auto; }
-        .log-line { @apply p-2 font-mono text-[10px] uppercase text-emerald-500 border-b border-zinc-900 last:border-0; }
-        .pmmc-input { @apply w-full bg-white border border-zinc-800 rounded-xl p-4 text-xs text-black font-mono outline-none focus:border-orange-600 transition-all; }
-        .pmmc-textarea { @apply w-full h-80 bg-white border border-zinc-800 rounded-3xl p-5 text-[11px] text-black font-mono outline-none resize-none transition-all; }
-        .pmmc-btn-main { @apply w-full bg-orange-600 text-black font-black py-5 rounded-2xl uppercase text-[10px] tracking-widest active:scale-95 transition-all shadow-xl; }
-        .pmmc-tab { @apply bg-zinc-950 border border-zinc-800 px-3 py-2 rounded-t-xl text-[9px] font-black uppercase text-zinc-600 cursor-pointer; }
-        .pmmc-tab.active { @apply border-t-orange-600 text-orange-500 bg-zinc-900; }
-        .pmmc-dot { @apply w-2 h-2 rounded-full bg-zinc-800 transition-all; }
-        .pmmc-dot.on { @apply bg-emerald-500 shadow-[0_0_8px_#10b981]; }
-        .phase-locked { @apply opacity-25 pointer-events-none; }
+        .pmc-card { @apply p-6 bg-zinc-900 border border-zinc-800 rounded-2xl mb-4 shadow-2xl; }
+        .pmc-input { @apply w-full bg-white text-black p-3 rounded-lg font-mono text-sm mb-2 outline-none; }
+        .pmc-btn { @apply w-full bg-orange-600 text-black font-black py-4 rounded-xl uppercase text-xs active:scale-95 transition-all; }
+        .pmc-tab { @apply bg-zinc-800 px-4 py-2 rounded-t-lg text-[10px] text-zinc-500 mr-1 font-bold; }
+        .pmc-tab.active { @apply bg-zinc-700 text-orange-500 border-t-2 border-orange-600; }
+        .log-line { @apply p-2 font-mono text-[10px] text-emerald-500 border-b border-zinc-950 last:border-0; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="bg-zinc-950 text-zinc-300 font-sans p-0">
+<body class="bg-zinc-950 text-zinc-300 p-4 pb-20">
 
-    <div class="pmmc-container">
-        <header class="pmmc-header">
-            <div>
-                <h1 class="text-xl font-black text-orange-600 italic uppercase">PMMC v0.8.2.5</h1>
-                <p class="text-[9px] text-zinc-600 font-bold uppercase tracking-[0.3em]">Ops Engine</p>
-            </div>
-        </header>
-
-        <div id="LOG_SHELL" onclick="window.toggleLog()" class="log-shell">
-            <div id="UI_LOG"></div>
+    <div class="max-w-md mx-auto">
+        <div class="pmc-card">
+            <span class="text-[9px] font-black text-zinc-600 uppercase mb-2 block tracking-widest">01 // IDENTITY HANDSHAKE</span>
+            <input type="password" id="TOKEN" oninput="window.handshake()" placeholder="Paste PAT..." class="pmc-input text-center">
+            <div id="STATUS" class="text-[10px] uppercase text-center font-black text-zinc-700 mt-1">System Offline</div>
         </div>
 
-        <div class="px-4 space-y-4">
-            <section id="PHASE_0_UI" class="pmmc-card">
-                <span class="text-[10px] font-black text-orange-600 uppercase mb-2 block italic text-center">01 // Auth Handshake</span>
-                <input type="password" id="ENTRY_TOKEN" oninput="window.silentHandshake()" placeholder="Handshake Token..." class="pmmc-input text-center">
-            </section>
+        <div class="pmc-card h-32 overflow-y-auto bg-black border-zinc-800 no-scrollbar">
+            <div id="LOG_INNER">
+                <div class="log-line text-orange-500">> PMC_BASELINE_v0.8.2.5_READY</div>
+            </div>
+        </div>
 
-            <section id="PHASE_2_UI" class="pmmc-card phase-locked">
-                <span class="text-[10px] font-black text-zinc-500 uppercase mb-2 block italic text-center">02 // Asset Workbench</span>
-                <div class="flex gap-2 mb-4">
-                    <input type="text" id="TARGET_REPO_NAME" placeholder="Nominate Repo..." class="pmmc-input">
-                    <button onclick="window.updateAssetUI()" class="bg-zinc-800 text-white font-black px-4 rounded-xl text-[10px] uppercase">Sync</button>
-                </div>
+        <div class="pmc-card">
+            <span class="text-[9px] font-black text-zinc-600 uppercase mb-2 block tracking-widest">02 // ASSET WORKBENCH</span>
+            <input type="text" id="REPO" placeholder="Target Repository Name..." class="pmc-input">
+            
+            <div class="flex mt-4">
+                <button id="tab-index.html" onclick="window.switchTab('index.html')" class="pmc-tab active">HTML</button>
+                <button id="tab-code.js" onclick="window.switchTab('code.js')" class="pmc-tab">JS</button>
+                <button id="tab-manifest.js" onclick="window.switchTab('manifest.js')" class="pmc-tab">JSON</button>
+            </div>
 
-                <div class="flex justify-between items-center border-t border-zinc-800 pt-4 mb-3">
-                    <div class="flex gap-1 overflow-x-auto no-scrollbar">
-                        <button id="tab-index.html" onclick="window.switchTab('tab-index.html')" class="pmmc-tab active">HTML</button>
-                        <button id="tab-code.js" onclick="window.switchTab('tab-code.js')" class="pmmc-tab">JS</button>
-                        <button id="tab-style.css" onclick="window.switchTab('tab-style.css')" class="pmmc-tab">CSS</button>
-                        <button id="tab-manifest.js" onclick="window.switchTab('tab-manifest.js')" class="pmmc-tab">JSON</button>
-                        <button id="tab-README.md" onclick="window.switchTab('tab-README.md')" class="pmmc-tab">MD</button>
-                    </div>
-                    <div class="flex gap-1">
-                        <div id="stat-index.html" class="pmmc-dot"></div>
-                        <div id="stat-code.js" class="pmmc-dot"></div>
-                        <div id="stat-style.css" class="pmmc-dot"></div>
-                        <div id="stat-manifest.js" class="pmmc-dot"></div>
-                        <div id="stat-README.md" class="pmmc-dot"></div>
-                    </div>
-                </div>
-
-                <textarea id="MAIN_TEXT" class="pmmc-textarea" placeholder="Asset Content..."></textarea>
-                <button onclick="window.runPush()" class="pmmc-btn-main">Commission Asset</button>
-                
-                <div id="DEPLOY_LINK_WRAPPER" class="hidden mt-4 p-4 bg-black border border-zinc-800 rounded-2xl text-center">
-                    <a id="DEPLOY_URL" href="#" target="_blank" class="text-orange-500 font-mono text-[9px] break-all hover:underline"></a>
-                </div>
-            </section>
+            <textarea id="EDITOR" class="w-full h-96 bg-zinc-800 text-white p-4 font-mono text-[11px] rounded-b-xl outline-none border-t border-zinc-700" placeholder="Source content..."></textarea>
+            
+            <button onclick="window.push()" class="pmc-btn mt-4">COMMISSION ASSET</button>
+            
+            <div id="LINK_BOX" class="hidden mt-4 p-3 bg-black border border-zinc-800 rounded-xl text-center">
+                <p class="text-[8px] text-zinc-600 font-black uppercase mb-1">Live Deployment</p>
+                <a id="LIVE_LINK" href="#" target="_blank" class="text-orange-500 text-[10px] font-mono break-all underline"></a>
+            </div>
         </div>
     </div>
-    <script src="code.js?v=0.8.2.5"></script>
+
+    <script src="code.js"></script>
 </body>
 </html>
