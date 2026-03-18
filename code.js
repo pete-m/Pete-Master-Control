@@ -1,110 +1,131 @@
-/* PMC_v0.8.2.5 // BASELINE_LOGIC */
-const files = ['index.html', 'code.js', 'manifest.js'];
-let buffer = { 'index.html': '', 'code.js': '', 'manifest.js': '' };
-let pat = '', user = '', activeTab = 'index.html';
+/* PROJECT: PMMC | VERSION: 0.8.2.5 | STATUS: DUAL-ANCHOR STABLE */
+(function() {
+    const files = ['index.html', 'code.js', 'style.css', 'manifest.js', 'README.md'];
+    let buffer = { 'index.html': '', 'code.js': '', 'style.css': '', 'manifest.js': '', 'README.md': '' };
+    let sessionPat = '', userLogin = '', activeTab = 'index.html';
 
-// DIAGNOSTICS
-window.log = (m) => {
-    const el = document.getElementById('LOG_INNER');
-    if (!el) return;
-    const div = document.createElement('div');
-    div.className = 'log-line';
-    div.textContent = `> ${m}`;
-    el.prepend(div);
-};
+    const log = (m) => {
+        const el = document.getElementById('UI_LOG');
+        const entry = document.createElement('div');
+        entry.className = 'log-line';
+        entry.textContent = `> ${m}`;
+        el.prepend(entry);
+    };
 
-// HANDSHAKE (Auto-trigger)
-window.handshake = async () => {
-    const input = document.getElementById('TOKEN').value.trim();
-    if (input.length < 40) return;
-    
-    try {
-        const r = await fetch('https://api.github.com/user', { headers: { 'Authorization': `token ${input}` } });
-        if (r.ok) {
-            const d = await r.json();
-            pat = input; user = d.login;
-            const status = document.getElementById('STATUS');
-            status.textContent = `ONLINE: ${user.toUpperCase()}`;
-            status.className = "text-[10px] uppercase text-center font-black text-emerald-500 mt-1";
-            log(`AUTH_SUCCESS: ${user}`);
-            
-            // LOAD PERSISTENCE
-            files.forEach(f => {
-                const saved = localStorage.getItem(`pmc_v0.8.2.5_${f}`);
-                if (saved) buffer[f] = saved;
+    window.toggleLog = () => {
+        const shell = document.getElementById('LOG_SHELL');
+        shell.classList.toggle('open');
+        shell.classList.toggle('shut');
+    };
+
+    window.silentHandshake = async () => {
+        const pat = document.getElementById('ENTRY_TOKEN').value.trim();
+        if (pat.length < 40) return;
+        try {
+            const r = await fetch('https://api.github.com/user', { headers: { 'Authorization': `token ${pat}` } });
+            if (r.ok) {
+                const d = await r.json();
+                sessionPat = pat; userLogin = d.login;
+                log(`PMMC_AUTH: ${d.login.toUpperCase()} ONLINE`);
+                document.getElementById('PHASE_1_UI').classList.remove('phase-locked');
+                document.getElementById('PHASE_2_UI').classList.remove('phase-locked');
+            }
+        } catch (e) { log("PMMC_AUTH: ERROR"); }
+    };
+
+    window.runInit = async () => {
+        const name = document.getElementById('NEW_REPO_NAME').value.trim();
+        if(!name) return;
+        log(`🔨 FACTORY: BUILDING [${name}]`);
+        try {
+            const r = await fetch('https://api.github.com/user/repos', {
+                method: 'POST',
+                headers: { 'Authorization': `token ${sessionPat}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, auto_init: true })
             });
-            document.getElementById('EDITOR').value = buffer[activeTab] || '';
-        } else {
-            log("AUTH_ERROR: CHECK_TOKEN");
-        }
-    } catch (e) { log("ERR: CONNECTION_FAILED"); }
-};
+            if (r.ok || r.status === 422) {
+                log(`✅ BUILD COMPLETE: ${name}`);
+                // SET SMART DEFAULT FOR PHASE 2
+                document.getElementById('TARGET_REPO_NAME').value = name;
+                
+                const yaml = `name: PMMC_Ops\non:\n  repository_dispatch:\n    types: [pmmc_maintenance_trigger]\njobs:\n  ops:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo "PMMC_OPS_ACTIVE"`;
+                await fetch(`https://api.github.com/repos/${userLogin}/${name}/contents/.github/workflows/pmmc-ops.yml`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `token ${sessionPat}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: "PMMC_System_Init", content: btoa(unescape(encodeURIComponent(yaml))) })
+                });
+                window.updateAssetUI();
+            }
+        } catch (e) { log("❌ FACTORY: ERROR"); }
+    };
 
-// TAB LOGIC
-window.switchTab = (f) => {
-    // Save current state
-    buffer[activeTab] = document.getElementById('EDITOR').value;
-    localStorage.setItem(`pmc_v0.8.2.5_${activeTab}`, buffer[activeTab]);
-    
-    // UI Update
-    document.querySelectorAll('.pmc-tab').forEach(t => t.classList.remove('active'));
-    document.getElementById(`tab-${f}`).classList.add('active');
-    
-    // Switch state
-    activeTab = f;
-    document.getElementById('EDITOR').value = buffer[activeTab] || '';
-    log(`TAB_SWAP: ${f.toUpperCase()}`);
-};
-
-// COMMISSION
-window.push = async () => {
-    const repo = document.getElementById('REPO').value.trim();
-    const content = document.getElementById('EDITOR').value;
-    if (!repo) return log("ERR: MISSING_REPO_NAME");
-    if (!pat) return log("ERR: NO_AUTH_FOUND");
-
-    log(`PUSHING: ${activeTab}...`);
-    try {
-        const res = await fetch(`https://api.github.com/repos/${user}/${repo}/contents/${activeTab}`, {
-            headers: { 'Authorization': `token ${pat}` }
-        });
-        const sha = res.ok ? (await res.json()).sha : null;
-
-        const put = await fetch(`https://api.github.com/repos/${user}/${repo}/contents/${activeTab}`, {
-            method: 'PUT',
-            headers: { 'Authorization': `token ${pat}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                message: `PMC_v0.8.2.5_Baseline_Push_${activeTab}`,
-                content: btoa(unescape(encodeURIComponent(content))),
-                sha: sha
-            })
-        });
-
-        if (put.ok) {
-            log(`SECURED: ${activeTab} synced to ${repo}`);
-            const url = `https://${user}.github.io/${repo}/`;
-            const box = document.getElementById('LINK_BOX');
-            const link = document.getElementById('LIVE_LINK');
-            link.href = url; link.textContent = url;
-            box.classList.remove('hidden');
-        } else {
-            log(`ERR: PUSH_FAIL_${put.status}`);
-        }
-    } catch (e) { log("ERR: FATAL_PUSH_ERROR"); }
-};
-
-log("PMC_ENGINE_ONLINE");
-
-    const updateAssetUI = async () => {
-        if (!currentRepo) return;
-        for (const f of files) {
-            const r = await fetch(`https://api.github.com/repos/${userLogin}/${currentRepo}/contents/${f}`, {
+    window.runPush = async () => {
+        const targetRepo = document.getElementById('TARGET_REPO_NAME').value.trim();
+        const content = document.getElementById('MAIN_TEXT').value;
+        if(!targetRepo || !content) return log("❌ WORKBENCH: NO TARGET/DATA");
+        
+        log(`📡 COMMISSIONING: ${activeTab.toUpperCase()} -> ${targetRepo}`);
+        try {
+            const res = await fetch(`https://api.github.com/repos/${userLogin}/${targetRepo}/contents/${activeTab}`, {
                 headers: { 'Authorization': `token ${sessionPat}` }
             });
-            const dot = document.getElementById(`stat-${f}`);
-            if (dot) dot.className = r.ok ? 'pmmc-dot on' : 'pmmc-dot';
+            const sha = res.ok ? (await res.json()).sha : null;
+            const push = await fetch(`https://api.github.com/repos/${userLogin}/${targetRepo}/contents/${activeTab}`, {
+                method: 'PUT',
+                headers: { 'Authorization': `token ${sessionPat}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: "PMMC_Sync", content: btoa(unescape(encodeURIComponent(content))), sha })
+            });
+            if (push.ok) {
+                log(`💎 SECURED: ${activeTab.toUpperCase()}`);
+                window.updateAssetUI();
+            }
+        } catch (e) { log("❌ PUSH ERROR"); }
+    };
+
+    window.switchTab = (tId) => {
+        buffer[activeTab] = document.getElementById('MAIN_TEXT').value;
+        document.querySelectorAll('.pmmc-tab').forEach(b => b.classList.remove('active'));
+        document.getElementById(tId).classList.add('active');
+        activeTab = tId.replace('tab-', '');
+        document.getElementById('MAIN_TEXT').value = buffer[activeTab] || "";
+        document.getElementById('MAIN_TEXT').focus();
+    };
+
+    window.updateAssetUI = async () => {
+        const targetRepo = document.getElementById('TARGET_REPO_NAME').value.trim();
+        if (!targetRepo) return;
+        log(`🔍 SYNCING: ${targetRepo}`);
+        for (const f of files) {
+            try {
+                const r = await fetch(`https://api.github.com/repos/${userLogin}/${targetRepo}/contents/${f}`, {
+                    headers: { 'Authorization': `token ${sessionPat}` }
+                });
+                const dot = document.getElementById(`stat-${f}`);
+                if (dot) dot.className = r.ok ? 'pmmc-dot on' : 'pmmc-dot';
+            } catch (e) {}
         }
     };
 
+    window.invokeYAML = async () => {
+        const targetRepo = document.getElementById('TARGET_REPO_NAME').value.trim();
+        if (!targetRepo) return log("❌ MAINT: NO TARGET");
+        log(`📡 DISPATCHING: ${targetRepo}`);
+        await fetch(`https://api.github.com/repos/${userLogin}/${targetRepo}/dispatches`, {
+            method: 'POST',
+            headers: { 'Authorization': `token ${sessionPat}`, 'Accept': 'application/vnd.github.v3+json' },
+            body: JSON.stringify({ event_type: "pmmc_maintenance_trigger" })
+        });
+        log("✅ SIGNAL SENT");
+    };
+
+    window.clearRepos = () => { 
+        document.getElementById('NEW_REPO_NAME').value = '';
+        document.getElementById('TARGET_REPO_NAME').value = '';
+        log("🗑️ FIELDS WIPED"); 
+        document.getElementById('MAINT_MODAL').style.display = 'none';
+    };
+
+    log(`PMMC_OPS_ENGINE v0.8.2.5 ONLINE.`);
+})();
     log(`PMMC_OPS_ENGINE v0.8.2.2 ONLINE.`);
 })();
