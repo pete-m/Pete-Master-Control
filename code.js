@@ -121,3 +121,21 @@ const pmc = {
     }
 };
 window.pmc = pmc;
+    deleteRepo: async () => {
+        const repo = document.getElementById('REPO').value.trim();
+        if(!confirm(`Delete ${repo}?`)) return;
+        const r = await fetch(`https://api.github.com/repos/${pmc.state.user}/${repo}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `token ${pmc.state.pat}` }
+        });
+        if (r.ok) pmc.log(`DELETED: ${repo}`);
+    },
+
+    clearStorage: () => {
+        if(confirm("Wipe cache?")) {
+            pmc.state.files.forEach(f => localStorage.removeItem(`pmc_v8_${f}`));
+            location.reload();
+        }
+    }
+};
+window.pmc = pmc;
