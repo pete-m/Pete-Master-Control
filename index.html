@@ -3,67 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PMC_PRO_v0.8.2.5</title>
+    <title>PMC_RESTORE_v0.8.2.7</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .pmc-card { @apply p-4 bg-zinc-900 border border-zinc-800 rounded-2xl mb-3 shadow-xl; }
+        .pmc-card { @apply p-4 bg-zinc-900 border border-zinc-800 rounded-2xl mb-3 shadow-2xl; }
         .pmc-input { @apply w-full bg-white text-black p-2 rounded-lg font-mono text-xs outline-none focus:ring-2 focus:ring-orange-500; }
-        .pmc-btn { @apply w-full bg-orange-600 text-black font-black py-3 rounded-xl uppercase text-[10px] active:scale-95 transition-all; }
-        #MAINT_PANEL.hidden { display: none; }
-        .tab-bar { @apply flex bg-zinc-950 border-b border-zinc-800 rounded-t-xl overflow-hidden; }
-        .pmc-tab { @apply flex-1 py-3 text-[9px] text-zinc-500 font-bold border-r border-zinc-800 uppercase transition-all; }
+        .pmc-btn { @apply w-full bg-orange-600 text-black font-black py-3 rounded-xl uppercase text-[10px] active:scale-95 transition-all shadow-lg; }
+        
+        /* THE NARRATIVE LOG */
+        #LOG_PANEL { @apply transition-all duration-300 ease-in-out overflow-hidden border-orange-900/20 bg-black rounded-2xl mb-3; }
+        .collapsed { height: 48px; }
+        .expanded { height: 250px; overflow-y: auto; }
+        .log-line { @apply p-2 font-mono text-[10px] text-emerald-400 border-b border-zinc-950 last:border-0; }
+
+        /* TABS */
+        .tab-bar { @apply flex bg-zinc-950 border-b border-zinc-800 rounded-t-xl; }
+        .pmc-tab { @apply flex-1 py-3 text-[9px] text-zinc-500 font-black border-r border-zinc-800 uppercase transition-all relative; }
         .pmc-tab.active { @apply bg-zinc-800 text-orange-500 border-b-2 border-orange-500; }
-        #LOG_CONTAINER { @apply transition-all duration-300 ease-in-out overflow-hidden; }
-        .collapsed { height: 42px; }
-        .expanded { height: 240px; overflow-y: auto; }
-        .log-line { @apply p-2 font-mono text-[10px] text-emerald-500 border-b border-zinc-950 last:border-0; }
+        .dirty::after { content: '•'; @apply absolute top-1 right-2 text-orange-500 text-lg leading-none; }
+        
+        #MAINT_PANEL.hidden { display: none; }
     </style>
 </head>
 <body class="bg-zinc-950 text-zinc-300 p-3 pb-20">
+
     <div class="max-w-md mx-auto">
-        <div id="MAINT_PANEL" class="hidden">
-            <div class="pmc-card border-orange-900/40 bg-zinc-900/50">
-                <div class="flex justify-between items-center mb-2">
-                    <span class="text-[9px] font-black text-zinc-600 uppercase tracking-widest">Dry Dock // Maintenance</span>
-                    <button onclick="window.toggleMaint()" class="text-orange-500 text-[9px] font-bold">[Close Deck]</button>
-                </div>
-                <div class="flex gap-2 mb-2">
-                    <input type="text" id="NEW_REPO" placeholder="New Hull Names (CSV)..." class="pmc-input flex-grow">
-                    <button onclick="window.buildRepo()" class="bg-zinc-100 text-black px-3 rounded-lg font-black text-[9px] uppercase">Init Hull</button>
-                </div>
-                <button onclick="window.clearStorage()" class="w-full border border-zinc-800 py-1 rounded text-[8px] uppercase text-zinc-600">Wipe Local Storage</button>
+        <div id="LOG_PANEL" class="collapsed relative border border-zinc-800">
+            <div class="absolute right-3 top-2 flex gap-2 z-50">
+                <button onclick="pmc.toggleMaint()" class="text-[9px] font-black text-zinc-500 uppercase bg-zinc-900 px-2 py-1 rounded border border-zinc-800">Maint</button>
+                <button onclick="pmc.toggleLog()" class="text-[9px] font-black text-orange-500 uppercase bg-zinc-800 px-2 py-1 rounded border border-orange-900/30">Log</button>
+            </div>
+            <div id="LOG_INNER"><div class="log-line text-orange-500">> SYSTEM_RECOVERY_COMPLETE</div></div>
+        </div>
+
+        <div id="MAINT_PANEL" class="hidden pmc-card border-red-900/30 bg-zinc-900/90">
+            <span class="text-[9px] font-black text-red-500 uppercase tracking-widest block mb-2">Power User // Utilities</span>
+            <div class="flex gap-2 mb-3">
+                <input type="text" id="NEW_REPO" placeholder="Repo List (CSV)..." class="pmc-input flex-grow">
+                <button onclick="pmc.initRepo()" class="bg-white text-black px-4 rounded-lg font-black text-[9px] uppercase">Init</button>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="pmc.deleteRepo()" class="bg-zinc-800 text-red-500 py-2 rounded text-[8px] font-bold uppercase">Delete Repo</button>
+                <button onclick="pmc.clearStorage()" class="bg-zinc-800 text-zinc-500 py-2 rounded text-[8px] font-bold uppercase">Wipe Cache</button>
             </div>
         </div>
 
-        <div id="LOG_CONTAINER" class="pmc-card bg-black border-zinc-800 collapsed relative">
-            <div class="absolute right-3 top-2 flex gap-2 z-20">
-                <button onclick="window.toggleMaint()" class="text-[9px] font-black text-zinc-600 uppercase bg-zinc-900 px-2 rounded hover:text-orange-500">Maint</button>
-                <button onclick="window.toggleLog()" class="text-[9px] font-black text-orange-500 uppercase bg-zinc-900 px-2 rounded">Log</button>
-            </div>
-            <div id="LOG_INNER"><div class="log-line text-orange-500">> PMC_PRO_STABLE_READY</div></div>
-        </div>
-
-        <div class="pmc-card flex gap-2 items-center">
-            <input type="password" id="TOKEN" oninput="window.handshake()" placeholder="Master PAT..." class="pmc-input mb-0 flex-grow text-center">
-            <div id="STATUS" class="text-[9px] font-black text-zinc-700 uppercase min-w-[70px] text-right">Offline</div>
+        <div class="pmc-card flex gap-3 items-center">
+            <input type="password" id="TOKEN" placeholder="Paste PAT..." class="pmc-input mb-0 flex-grow text-center">
+            <div id="STATUS" class="text-[10px] font-black text-zinc-700 uppercase min-w-[80px] text-right">Offline</div>
         </div>
 
         <div class="pmc-card p-0 overflow-hidden border-zinc-700">
-            <div class="p-3 bg-zinc-800/40"><input type="text" id="REPO" placeholder="Current Hull..." class="pmc-input mb-0 text-center uppercase tracking-widest font-bold"></div>
-            <div class="tab-bar">
-                <button onclick="window.switchTab('index.html')" id="tab-index.html" class="pmc-tab active">HTML</button>
-                <button onclick="window.switchTab('code.js')" id="tab-code.js" class="pmc-tab">JS</button>
-                <button onclick="window.switchTab('manifest.js')" id="tab-manifest.js" class="pmc-tab">JSON</button>
-                <button onclick="window.switchTab('README.md')" id="tab-README.md" class="pmc-tab border-r-0">MD</button>
+            <div class="p-3 bg-zinc-800/40 border-b border-zinc-800">
+                <input type="text" id="REPO" placeholder="Target Repository..." class="pmc-input mb-0 text-center uppercase font-black tracking-tighter">
             </div>
-            <textarea id="EDITOR" class="w-full h-80 bg-zinc-900 text-white p-4 font-mono text-[11px] outline-none border-none" placeholder="Enter fitting data..."></textarea>
-            <div class="p-3 bg-zinc-900"><button onclick="window.push()" class="pmc-btn">Commission Asset</button></div>
-        </div>
+            
+            <div class="tab-bar">
+                <button onclick="pmc.switchTab('index.html')" id="tab-index.html" class="pmc-tab active">HTML</button>
+                <button onclick="pmc.switchTab('code.js')" id="tab-code.js" class="pmc-tab">JS</button>
+                <button onclick="pmc.switchTab('manifest.js')" id="tab-manifest.js" class="pmc-tab">JSON</button>
+                <button onclick="window.pmc.switchTab('README.md')" id="tab-README.md" class="pmc-tab border-r-0">MD</button>
+            </div>
 
-        <div id="LINK_BOX" class="hidden pmc-card bg-black border-emerald-900/50 text-center">
-            <a id="LIVE_LINK" href="#" target="_blank" class="text-orange-500 text-[10px] font-mono underline break-all"></a>
+            <textarea id="EDITOR" class="w-full h-96 bg-zinc-950 text-emerald-50 p-4 font-mono text-[11px] outline-none border-none" placeholder="Awaiting content..."></textarea>
+            
+            <div class="p-4 bg-zinc-900 border-t border-zinc-800">
+                <button onclick="pmc.push()" class="pmc-btn">Commission Asset</button>
+            </div>
         </div>
     </div>
+
     <script src="code.js"></script>
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log("PMC_LOADED");
+            document.getElementById('TOKEN').addEventListener('input', () => pmc.handshake());
+            document.getElementById('EDITOR').addEventListener('input', () => pmc.save());
+        });
+    </script>
 </body>
 </html>
