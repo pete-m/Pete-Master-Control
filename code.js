@@ -1,107 +1,90 @@
-/* PMC_v0.8.2.8 // RECOVERY_SCRIPT */
-const pmc = {
-    files: ['index.html', 'code.js', 'manifest.js', 'README.md'],
-    state: { active: 'index.html', pat: '', user: '', buffer: {} },
+/* PMMC v0.8.0 GOLD | RESTORED JAN BUILD */
+(function() {
+    let sessionPat = '', userLogin = '', activeTab = 'index.html';
+    let buffers = { 'index.html': '', 'code.js': '', 'style.css': '' };
 
-    log: (m) => {
-        const entry = document.createElement('div');
-        entry.className = 'log-entry';
-        entry.textContent = `> ${m}`;
-        document.getElementById('LOG_INNER')?.prepend(entry) || document.getElementById('LOG_BOX').prepend(entry);
-    },
+    const log = (m) => {
+        const el = document.getElementById('UI_LOG');
+        const d = document.createElement('div');
+        d.textContent = `> ${m}`;
+        el.prepend(d);
+    };
 
-    toggle: (id) => {
-        const el = document.getElementById(id);
-        el.style.display = (el.style.display === 'none' || el.classList.contains('show') === false) ? 'block' : 'none';
-        if(id === 'MAINT_AREA') el.classList.toggle('show');
-    },
-
-    auth: async () => {
-        const val = document.getElementById('TOKEN').value.trim();
-        if (val.length < 40) return;
+    // The PAT Listener Logic
+    document.getElementById('ENTRY_TOKEN').addEventListener('input', async (e) => {
+        const pat = e.target.value.trim();
+        if (pat.length < 40) return;
+        
         try {
-            const r = await fetch('https://api.github.com/user', { headers: { 'Authorization': `token ${val}` } });
+            const r = await fetch('https://api.github.com/user', {
+                headers: { 'Authorization': `token ${pat}` }
+            });
             if (r.ok) {
-                const d = await r.json();
-                pmc.state.pat = val; pmc.state.user = d.login;
-                document.getElementById('USER_TAG').textContent = pmc.state.user;
-                document.getElementById('USER_TAG').className = "text-emerald-500 text-[9px] font-bold uppercase pt-1";
-                pmc.log(`AUTH: ${pmc.state.user}`);
-                pmc.load();
+                const data = await r.json();
+                sessionPat = pat;
+                userLogin = data.login;
+                log(`AUTH_SUCCESS: WELCOME ${data.login.toUpperCase()}`);
+                document.getElementById('FACTORY_ZONE').classList.remove('phase-locked');
+                document.getElementById('WORKBENCH_ZONE').classList.remove('phase-locked');
             }
-        } catch (e) { pmc.log("ERR: Handshake"); }
-    },
+        } catch (err) { log("AUTH_FAILED"); }
+    });
 
-    write: () => {
-        pmc.state.buffer[pmc.state.active] = document.getElementById('EDITOR').value;
-        localStorage.setItem(`pmc_v8_${pmc.state.active}`, pmc.state.buffer[pmc.state.active]);
-        pmc.refreshUI();
-    },
+    window.batchInit = async () => {
+        const raw = document.getElementById('REPO_LIST').value;
+        const repos = raw.split(',').map(s => s.trim()).filter(s => s);
+        
+        for (const name of repos) {
+            log(`INIT_START: ${name}`);
+            try {
+                const r = await fetch('https://api.github.com/user/repos', {
+                    method: 'POST',
+                    headers: { 'Authorization': `token ${sessionPat}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, auto_init: true })
+                });
+                if (r.ok || r.status === 422) {
+                    log(`STABILISED: ${name}`);
+                    document.getElementById('TARGET_REPO').value = name;
+                }
+            } catch (e) { log(`FAILED: ${name}`); }
+        }
+    };
 
-    load: () => {
-        pmc.files.forEach(f => {
-            pmc.state.buffer[f] = localStorage.getItem(`pmc_v8_${f}`) || '';
-        });
-        document.getElementById('EDITOR').value = pmc.state.buffer[pmc.state.active];
-        pmc.refreshUI();
-    },
+    window.setTab = (file) => {
+        buffers[activeTab] = document.getElementById('MAIN_TEXT').value;
+        activeTab = file;
+        document.getElementById('MAIN_TEXT').value = buffers[file];
+        document.getElementById('PREVIEW_HEADER').textContent = `Editing: ${file}`;
+        log(`SWITCHED_TO: ${file.toUpperCase()}`);
+    };
 
-    setTab: (f) => {
-        pmc.state.active = f;
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.getElementById(`t-${f}`).classList.add('active');
-        document.getElementById('EDITOR').value = pmc.state.buffer[f] || '';
-        pmc.log(`TAB: ${f}`);
-    },
+    window.commission = async () => {
+        const target = document.getElementById('TARGET_REPO').value.trim();
+        const content = document.getElementById('MAIN_TEXT').value;
+        if (!target || !content) return log("MISSING_TARGET_OR_DATA");
 
-    refreshUI: () => {
-        let pending = [];
-        pmc.files.forEach(f => {
-            const tab = document.getElementById(`t-${f}`);
-            if (pmc.state.buffer[f] && pmc.state.buffer[f].trim().length > 0) {
-                tab.classList.add('dirty');
-                pending.push(f);
-            } else {
-                tab.classList.remove('dirty');
-            }
-        });
-        document.getElementById('STATUS_PREVIEW').textContent = `Pending: ${pending.join(', ') || 'None'}`;
-    },
-
-    push: async () => {
-        const repo = document.getElementById('REPO').value.trim();
-        const content = document.getElementById('EDITOR').value;
-        if (!repo || !pmc.state.pat) return pmc.log("ERR: Setup Incomplete");
-        pmc.log(`PUSHING: ${pmc.state.active}`);
+        log(`PUSHING: ${activeTab} -> ${target}`);
         try {
-            const res = await fetch(`https://api.github.com/repos/${pmc.state.user}/${repo}/contents/${pmc.state.active}`, {
-                headers: { 'Authorization': `token ${pmc.state.pat}` }
+            const res = await fetch(`https://api.github.com/repos/${userLogin}/${target}/contents/${activeTab}`, {
+                headers: { 'Authorization': `token ${sessionPat}` }
             });
             const sha = res.ok ? (await res.json()).sha : null;
-            const put = await fetch(`https://api.github.com/repos/${pmc.state.user}/${repo}/contents/${pmc.state.active}`, {
+
+            const push = await fetch(`https://api.github.com/repos/${userLogin}/${target}/contents/${activeTab}`, {
                 method: 'PUT',
-                headers: { 'Authorization': `token ${pmc.state.pat}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: `PMC_Update`, content: btoa(unescape(encodeURIComponent(content))), sha: sha })
+                headers: { 'Authorization': `token ${sessionPat}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    message: "PMMC_GOLD_SYNC", 
+                    content: btoa(unescape(encodeURIComponent(content))), 
+                    sha 
+                })
             });
-            if (put.ok) pmc.log(`SUCCESS: ${pmc.state.active}`);
-        } catch (e) { pmc.log("ERR: Push"); }
-    },
+            if (push.ok) log(`COMMISSIONED: ${activeTab} SUCCESS`);
+        } catch (e) { log("PUSH_ERROR"); }
+    };
 
-    build: async () => {
-        const names = document.getElementById('NEW_REPO').value.split(',').map(n => n.trim());
-        for (const name of names) {
-            const r = await fetch('https://api.github.com/user/repos', {
-                method: 'POST',
-                headers: { 'Authorization': `token ${pmc.state.pat}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, auto_init: true })
-            });
-            if (r.ok) pmc.log(`CREATED: ${name}`);
-        }
-        document.getElementById('REPO').value = names[names.length - 1];
-    },
-
-    wipe: () => {
-        if(confirm("Clear local data?")) {
+    log("PMMC_ENGINE_STABLE_v0.8.0");
+})();
             pmc.files.forEach(f => localStorage.removeItem(`pmc_v8_${f}`));
             location.reload();
         }
